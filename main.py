@@ -16,10 +16,10 @@ load_dotenv()
 
 # Retrieve essential bot configuration details from environment variables
 BOT_TOKEN = os.getenv("BOT_TOKEN")  # Token for Telegram bot authentication
-PHOTO_CHANNEL_ID = os.getenv(
-    "PHOTO_CHANNEL_ID"
-)  # ID of the Telegram channel for posting photos
-TEST_GROUP_ID = os.getenv("TEST_GROUP_ID")  # ID of the test group for bot operations
+PHOTO_CHANNEL_ID = os.getenv("PHOTO_CHANNEL_ID")
+MUSIC_CHANNEL_ID = os.getenv("MUSIC_CHANNEL_ID")
+# TEST_GROUP_ID = os.getenv("TEST_GROUP_ID")  # ID of the test group for bot operations
+GROUP_ID = os.getenv("GROUP_ID")  # The main group id
 
 # Initialize a global flag to manage the bot's active status
 is_active = True
@@ -34,7 +34,7 @@ logging.basicConfig(
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global is_active  # Access the global is_active flag to change bot status
     if (
-        str(update.effective_chat.id) == TEST_GROUP_ID
+        str(update.effective_chat.id) == GROUP_ID
     ):  # Verify the command comes from the authorized test group
         is_active = True  # Activate the bot
         await context.bot.send_message(
@@ -47,7 +47,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global is_active  # Access the global is_active flag to change bot status
     if (
-        str(update.effective_chat.id) == TEST_GROUP_ID
+        str(update.effective_chat.id) == GROUP_ID
     ):  # Verify the command comes from the authorized test group
         is_active = False  # Deactivate the bot
         await context.bot.send_message(
@@ -59,7 +59,7 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Define a command handler to provide help information about bot commands
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if (
-        str(update.effective_chat.id) == TEST_GROUP_ID
+        str(update.effective_chat.id) == GROUP_ID
     ):  # Verify the command comes from the authorized test group
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
@@ -76,7 +76,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def send_picture(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global is_active  # Access the global is_active flag to check bot status
     if (
-        is_active and str(update.effective_chat.id) == TEST_GROUP_ID
+        is_active and str(update.effective_chat.id) == GROUP_ID
     ):  # Ensure bot is active and message is from the test group
         message = update.message
         photo_size = message.photo  # Extract photo details
@@ -104,7 +104,7 @@ async def send_picture(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def send_music(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global is_active  # Access the global is_active flag to check bot status
     if (
-        is_active and str(update.effective_chat.id) == TEST_GROUP_ID
+        is_active and str(update.effective_chat.id) == GROUP_ID
     ):  # Ensure bot is active and message is from the test group
         message = update.message
         music = message.audio  # Extract audio file details
@@ -112,7 +112,7 @@ async def send_music(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         try:
             await context.bot.send_audio(
-                chat_id=PHOTO_CHANNEL_ID,
+                chat_id=MUSIC_CHANNEL_ID,
                 audio=music.file_id,
                 caption=f"Title: {music.title}\nProvider: {sender_username}",
             )
