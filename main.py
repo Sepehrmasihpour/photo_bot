@@ -36,7 +36,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if (
         str(update.effective_chat.id) == GROUP_ID
     ):  # Verify the command comes from the authorized test group
-        is_active = True  # Activate the bot
+        is_active = True  # Activate the bo
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text="I'm a bot made with love to archive the history of the group",
@@ -112,7 +112,7 @@ async def send_music(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         try:
             await context.bot.send_audio(
-                chat_id=MUSIC_CHANNEL_ID,
+                chat_id=PHOTO_CHANNEL_ID,
                 audio=music.file_id,
                 caption=f"Title: {music.title}\nProvider: {sender_username}",
             )
