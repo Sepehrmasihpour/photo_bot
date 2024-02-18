@@ -122,6 +122,31 @@ async def send_music(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )  # Log any errors during audio sending
 
 
+# this message handler will send all all the video to the channel
+async def send_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global is_active  # Access the global is_active flag to check bot status
+    if (
+        is_active and str(update.effective_chat.id) == GROUP_ID
+    ):  # Ensure bot is active and message is from the test group
+        message = update.message
+        video = message.video  # Extract audio file details
+        sender_username = message.from_user.username  # Extract sender's username
+        caption = (
+            message.caption if message.caption else "none"
+        )  # Use provided caption or default to "none"
+
+        try:
+            await context.bot.send_video(
+                chat_id=PHOTO_CHANNEL_ID,
+                video=video.file_id,
+                caption=f"Title: Provider: {sender_username}\nCaption: {caption}",
+            )
+        except Exception as e:
+            logging.error(
+                f"Failed to send Music: {e}"
+            )  # Log any errors during audio sending
+
+
 # Main application setup
 if __name__ == "__main__":
     # Initialize the bot with the provided token and configuration settings
@@ -142,6 +167,9 @@ if __name__ == "__main__":
         filters.PHOTO & (~filters.FORWARDED) & (~filters.COMMAND), send_picture
     )
     music_handler = MessageHandler(filters.AUDIO & (~filters.COMMAND), send_music)
+    video_handler = MessageHandler(
+        filters.VIDEO & (~filters.FORWARDED) & (~filters.COMMAND), send_video
+    )
 
     # Register handlers with the application
     # application.add_handler(test_handler)
@@ -150,6 +178,7 @@ if __name__ == "__main__":
     application.add_handler(help_handler)
     application.add_handler(photo_handler)
     application.add_handler(music_handler)
+    application.add_handler(video_handler)
 
     # Start the bot and run it until it is interrupted
     application.run_polling()
