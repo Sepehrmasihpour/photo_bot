@@ -1,3 +1,5 @@
+# TODO:add the artist of the music if it exists to the caption and in a form of a hashtag for navigation
+
 # Import necessary libraries for bot operation
 import logging
 import os
@@ -110,12 +112,13 @@ async def send_music(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = update.message
         music = message.audio  # Extract audio file details
         sender_username = message.from_user.username  # Extract sender's username
+        artist = f"\n#{music.performer}" if music.performer else ""
 
         try:
             await context.bot.send_audio(
                 chat_id=TEST_CHANNEL_ID,
                 audio=music.file_id,
-                caption=f"Title: {music.title}\nProvider: {sender_username}",
+                caption=f"Title: {music.title}\nProvider: {sender_username}{artist}",
             )
         except Exception as e:
             logging.error(
