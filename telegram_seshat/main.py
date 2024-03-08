@@ -1,5 +1,3 @@
-# TODO:add the artist of the music if it exists to the caption and in a form of a hashtag for navigation
-
 # Import necessary libraries for bot operation
 import logging
 import os
