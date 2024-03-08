@@ -16,10 +16,11 @@ load_dotenv()
 
 # Retrieve essential bot configuration details from environment variables
 BOT_TOKEN = os.getenv("BOT_TOKEN")  # Token for Telegram bot authentication
-PHOTO_CHANNEL_ID = os.getenv("PHOTO_CHANNEL_ID")
-MUSIC_CHANNEL_ID = os.getenv("MUSIC_CHANNEL_ID")
-# TEST_GROUP_ID = os.getenv("TEST_GROUP_ID")  # ID of the test group for bot operations
+CHANNEL_ID = os.getenv("CHANNEL_ID")
 GROUP_ID = os.getenv("GROUP_ID")  # The main group id
+TEST_BOT_TOKEN = os.getenv("TEST_BOT_TOKEN")
+TEST_CHANNEL_ID = os.getenv("TEST_CHANNEL_ID")
+TEST_GROUP_ID = os.getenv("TEST_GROUP_ID")  # ID of the test group for bot operations
 
 # Initialize a global flag to manage the bot's active status
 is_active = True
@@ -34,7 +35,7 @@ logging.basicConfig(
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global is_active  # Access the global is_active flag to change bot status
     if (
-        str(update.effective_chat.id) == GROUP_ID
+        str(update.effective_chat.id) == TEST_GROUP_ID
     ):  # Verify the command comes from the authorized test group
         is_active = True  # Activate the bo
         await context.bot.send_message(
@@ -47,7 +48,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global is_active  # Access the global is_active flag to change bot status
     if (
-        str(update.effective_chat.id) == GROUP_ID
+        str(update.effective_chat.id) == TEST_GROUP_ID
     ):  # Verify the command comes from the authorized test group
         is_active = False  # Deactivate the bot
         await context.bot.send_message(
@@ -59,7 +60,7 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Define a command handler to provide help information about bot commands
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if (
-        str(update.effective_chat.id) == GROUP_ID
+        str(update.effective_chat.id) == TEST_GROUP_ID
     ):  # Verify the command comes from the authorized test group
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
@@ -76,7 +77,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def send_picture(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global is_active  # Access the global is_active flag to check bot status
     if (
-        is_active and str(update.effective_chat.id) == GROUP_ID
+        is_active and str(update.effective_chat.id) == TEST_GROUP_ID
     ):  # Ensure bot is active and message is from the test group
         message = update.message
         photo_size = message.photo  # Extract photo details
@@ -90,7 +91,7 @@ async def send_picture(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         try:
             await context.bot.send_photo(
-                chat_id=PHOTO_CHANNEL_ID,
+                chat_id=TEST_CHANNEL_ID,
                 photo=largest_photo,
                 caption=f'Provider: {sender_username}\nCaption: "{caption}"',
             )
@@ -104,7 +105,7 @@ async def send_picture(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def send_music(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global is_active  # Access the global is_active flag to check bot status
     if (
-        is_active and str(update.effective_chat.id) == GROUP_ID
+        is_active and str(update.effective_chat.id) == TEST_GROUP_ID
     ):  # Ensure bot is active and message is from the test group
         message = update.message
         music = message.audio  # Extract audio file details
@@ -112,7 +113,7 @@ async def send_music(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         try:
             await context.bot.send_audio(
-                chat_id=PHOTO_CHANNEL_ID,
+                chat_id=TEST_CHANNEL_ID,
                 audio=music.file_id,
                 caption=f"Title: {music.title}\nProvider: {sender_username}",
             )
@@ -126,7 +127,7 @@ async def send_music(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def send_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global is_active  # Access the global is_active flag to check bot status
     if (
-        is_active and str(update.effective_chat.id) == GROUP_ID
+        is_active and str(update.effective_chat.id) == TEST_GROUP_ID
     ):  # Ensure bot is active and message is from the test group
         message = update.message
         video = message.video  # Extract audio file details
@@ -137,7 +138,7 @@ async def send_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         try:
             await context.bot.send_video(
-                chat_id=PHOTO_CHANNEL_ID,
+                chat_id=TEST_CHANNEL_ID,
                 video=video.file_id,
                 caption=f"Title: Provider: {sender_username}\nCaption: {caption}",
             )
@@ -152,7 +153,7 @@ if __name__ == "__main__":
     # Initialize the bot with the provided token and configuration settings
     application = (
         ApplicationBuilder()
-        .token(BOT_TOKEN)
+        .token(TEST_BOT_TOKEN)
         .connection_pool_size(8)
         .pool_timeout(30)
         .build()
