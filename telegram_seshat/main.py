@@ -1,4 +1,4 @@
-# TODO:add the artist of the music if it exists to the caption and in a form of a hashtag for navigation
+# TODO:Build an api for bot that will handle the sending of messeges to the channel
 
 # Import necessary libraries for bot operation
 import logging
