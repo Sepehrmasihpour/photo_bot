@@ -2,6 +2,7 @@ import aiohttp
 import os
 from dotenv import load_dotenv
 from typing import Union
+from urllib.parse import quote
 from aiohttp import ClientError, ClientSession
 from aiofiles import open as aioopen
 from os.path import exists
@@ -21,18 +22,19 @@ TEST_GROUP_ID = os.getenv("TEST_GROUP_ID")
 
 # TODO find out why the send_message_via_bot dosent work
 # TODO test the send_photo_via_bot function and is's api endPoint in main
+# TODO change the send photo via bot, make it more like send_message_via_bot
 
 # these are the functions that use the telegram api to send text message to pacific chat ,main group, main channel
 
 
-# Asynchronously sends a message to a specified chat via the Telegram Bot API.
 async def send_message_via_bot(message: str, chat_id: Union[str, int]):
-    send_text = f"https://api.telegram.org/bot{TEST_BOT_TOKEN}/sendMessage?chat_id={chat_id}&parse_mode=Markdown&text={message}"
+    encoded_message = quote(message)  # URL encode the message
+    send_text = f"https://api.telegram.org/bot{TEST_BOT_TOKEN}/sendMessage?chat_id={chat_id}&parse_mode=Markdown&text={encoded_message}"
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(send_text) as response:
                 if response.status == 200:
-                    return await response.json()  # Return the successful response
+                    return await response.json()
                 else:
                     error_message = (
                         f"Error sending message: HTTP status {response.status}"
@@ -40,9 +42,9 @@ async def send_message_via_bot(message: str, chat_id: Union[str, int]):
                     return {"error": error_message}
         except aiohttp.ClientError as e:
             error_message = f"Client error occurred: {e}"
-        except Exception as e:  # A fallback for unexpected exceptions
+        except Exception as e:
             error_message = f"An unexpected error occurred: {e}"
-        return {"error": error_message}  # Return the error message
+        return {"error": error_message}
 
 
 # Asynchronously posts a message to the main channel under the seshat control using the Bot API.
@@ -51,10 +53,9 @@ async def send_message_channel(text_post: str):
     return response
 
 
-# ! I this function dosen't work find out why and fix it
 # Asynchronously sends a tex message to the main group under the seshat control using the Bot API.
-async def message_group_via_bot(message: str):
-    response = await send_message_via_bot(message, TEST_GROUP_ID)
+async def message_group_via_bot(text: str):
+    response = await send_message_via_bot(text, TEST_GROUP_ID)
     return response
 
 
