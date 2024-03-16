@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Annotated
 from fastapi import FastAPI, HTTPException
 from bot_actions import *
 
@@ -19,7 +19,6 @@ async def send_message(message: str, chat_id: Union[int, str]):
     }
 
 
-# !this dosent work fix it
 # this endpoint will send text message to the main group under the sehsat control
 # uisng the message_group_via_bot function
 @app.post("/sendMessage/mainGroup/text/{message}")
@@ -49,10 +48,12 @@ async def post_channel(post: str):
 # The endpoints for sendimg/posting pictures
 
 
-# ! this is untested, test it
-@app.post("sendMessage/photo/{photo}/{chat_id}")
-async def send_photo(photo: str, chat_id: str | int, caption: str | None = None):
-    response = await send_photo_via_bot(photo=photo, chat_id=chat_id, caption=caption)
-    if response is None:
-        raise HTTPException(status_code=500, detail="Failed to send photo")
-    return {"detail": "Photo sent successfully", "response": response}
+# !This function local file photo dose not work fix it later
+@app.post("/sendMessage/photo/{chat_id}")
+async def send_photo_endpoint(
+    photo: str, chat_id: Union[int, str], caption: str | None = None
+):
+    result = await send_photo_via_bot(photo=photo, chat_id=chat_id, caption=caption)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
