@@ -12,16 +12,11 @@ load_dotenv()
 
 
 # environment variable retrievals
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-CHANNEL_ID = os.getenv("CHANNEL_ID")
-GROUP_ID = os.getenv("GROUP_ID")
 TEST_BOT_TOKEN = os.getenv("TEST_BOT_TOKEN")
-TEST_CHANNEL_ID = os.getenv("TEST_CHANNEL_ID")
-TEST_GROUP_ID = os.getenv("TEST_GROUP_ID")
 
 
-# TODO test the send_photo_via_bot function and is's api endPoint in main
-# TODO change the send photo via bot, make it more like send_message_via_bot
+# TODO : make the sned to group and send to channel fucntion for photo the same way as send_message
+# TODO: find out what is the problem with the local file procces in the send photo fucntion
 
 
 # *This function sends an asynchronous HTTP request to the Telegram API.
@@ -56,18 +51,6 @@ async def send_message_via_bot(message: str, chat_id: Union[str, int]):
         return {"message": "Message sent successfully", "result": response_json}
     except Exception as e:
         return {"error": str(e)}
-
-
-# Asynchronously posts a message to the main channel under the seshat control using the Bot API.
-async def send_message_channel(text_post: str):
-    response = await send_message_via_bot(text_post, TEST_CHANNEL_ID)
-    return response
-
-
-# Asynchronously sends a tex message to the main group under the seshat control using the Bot API.
-async def message_group_via_bot(text: str):
-    response = await send_message_via_bot(text, TEST_GROUP_ID)
-    return response
 
 
 # *These are the functions that will use the telegram api to send/post
