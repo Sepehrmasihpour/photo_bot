@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from typing import Union
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile
 from bot_actions import *
 
 load_dotenv()
@@ -55,27 +55,43 @@ async def post_channel(post: str):
 # The endpoints for sendimg/posting pictures
 
 
-# !This function local file photo dose not work fix it later
 @app.post("/sendMessage/photo/{chat_id}")
-async def send_photo_endpoint(
-    photo: str, chat_id: Union[int, str], caption: str | None = None
-):
-    result = await send_photo_via_bot(photo=photo, chat_id=chat_id, caption=caption)
-    if "error" in result:
-        raise HTTPException(status_code=400, detail=result["error"])
-    return {
-        "message": "Successfully sent the Photo",
-        "result": result,
-    }
+async def send_photo(chat_id: str, photo: Union[UploadFile, str], caption: str = None):
+    # List of acceptable MIME types for photos
+    acceptable_mime_types = ["image/jpeg", "image/png", "image/gif"]
+
+    # Check if uploaded photo is a string or a file and if its a file weather its MIME type is acceptable
+    if type(photo) == str:
+        result = await send_photo_via_bot(photo=photo, chat_id=chat_id, caption=caption)
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+        return {
+            "message": "Successfully sent the Photo",
+            "result": result,
+        }
+
+    else:
+        if photo.content_type not in acceptable_mime_types:
+            raise HTTPException(
+                status_code=400, detail="Unsupported file type. Please upload an image."
+            )
+
+        # send the photo_data to the telegram api
+        result = await send_photo_via_bot(
+            photo=photo.file, chat_id=chat_id, caption=caption
+        )
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+
+        return {
+            "message": "Successfully sent the Photo",
+            "result": result,
+        }
 
 
 @app.post("/sendMessage/mainGroupn/photo")
-async def send_photo_group(photo: str, caption: str | None = None):
-    result = await send_photo_via_bot(
-        photo=photo, chat_id=TEST_GROUP_ID, caption=caption
-    )
-    if "error" in result:
-        raise HTTPException(status_code=400, detail=result["error"])
+async def send_photo_group(photo: Union[UploadFile, str], caption: str | None = None):
+    result = await send_photo(photo=photo, chat_id=TEST_GROUP_ID, caption=caption)
     return {
         "message": "Successfully sent the Photo to the main group",
         "result": result,
@@ -83,13 +99,9 @@ async def send_photo_group(photo: str, caption: str | None = None):
 
 
 @app.post("/post/mainChannel/photo")
-async def post_photo_channel(photo: str, caption: str | None = None):
-    result = await send_photo_via_bot(
-        photo=photo, chat_id=TEST_CHANNEL_ID, caption=caption
-    )
-    if "error" in result:
-        raise HTTPException(status_code=400, detail=result["error"])
+async def post_photo_channel(photo: Union[UploadFile, str], caption: str | None = None):
+    result = await send_photo(photo=photo, chat_id=TEST_CHANNEL_ID, caption=caption)
     return {
-        "message": "Successfully sent the Photo to the main channel",
+        "message": "Successfully posted the Photo to the main channel",
         "result": result,
     }
