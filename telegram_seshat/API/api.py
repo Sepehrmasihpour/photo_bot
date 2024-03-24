@@ -19,26 +19,29 @@ async def send_media(
     media_types = {
         "photo": {
             "acceptable_mime_types": ["image/jpeg", "image/png", "image/gif"],
-            "bot_action": send_photo_via_bot,
         },
         "audio": {
             "acceptable_mime_types": ["audio/mpeg", "audio/ogg", "audio/wav"],
-            "bot_action": send_audio_via_bot,
         },
         "video": {
             "acceptable_mime_types": ["video/mp4", "video/ogg", "video/webm"],
-            "bot_action": send_video_via_bot,
         },
-        "text": {"bot_action": send_message_via_bot},
+        "text": {None},
     }
     if input_media_type in media_types:
-        data = media_types[input_media_type]
-        bot_action = data["bot_action"]
+        media_type_data = media_types[input_media_type]
         if type(media) == str:
             result = (
-                await bot_action(chat_id=chat_id, media=media, caption=caption)
+                await send_media_via_bot(
+                    chat_id=chat_id,
+                    media=media,
+                    caption=caption,
+                    media_type=input_media_type,
+                )
                 if caption != None
-                else await bot_action(chat_id=chat_id, media=media)
+                else await send_media_via_bot(
+                    chat_id=chat_id, media=media, media_type=input_media_type
+                )
             )
             if "error" in result:
                 raise HTTPException(status_code=400, detail=result["error"])
@@ -47,16 +50,23 @@ async def send_media(
                 "result": result,
             }
         else:
-            acceptable_mime_types = data["acceptable_mime_types"]
+            acceptable_mime_types = media_type_data["acceptable_mime_types"]
             if not media.content_type in acceptable_mime_types:
                 raise HTTPException(
                     status_code=400,
                     detail=f"Unsupported file type. Please upload an {input_media_type}.",
                 )
             result = (
-                await bot_action(chat_id=chat_id, media=media.file, caption=caption)
+                await send_media_via_bot(
+                    chat_id=chat_id,
+                    media=media.file,
+                    caption=caption,
+                    media_type=input_media_type,
+                )
                 if caption != None
-                else await bot_action(chat_id=chat_id, media=media.file)
+                else await send_media_via_bot(
+                    chat_id=chat_id, media=media.file, media_type=input_media_type
+                )
             )
             if "error" in result:
                 raise HTTPException(status_code=400, detail=result["error"])
@@ -71,9 +81,9 @@ async def send_media(
 
 
 # the end point for sending a message via bot to a specific chatID uisng
-@app.post("/sendMessage/text/{message}/{chat_id}")
-async def send_message(message: str, chat_id: int | str):
-    result = await send_media(chat_id=chat_id, media=message, media_type="text")
+@app.post("/sendMessage/text/")
+async def send_message(text: str, chat_id: int | str):
+    result = await send_media(chat_id=chat_id, media=text, media_type="text")
     return result
 
 
@@ -120,5 +130,45 @@ async def post_photo_channel(photo: UploadFile | str, caption: str = None):
 async def send_video(chat_id: str | int, video: UploadFile | str, caption: str | int):
     result = await send_media(
         chat_id=chat_id, media=video, caption=caption, media_type="video"
+    )
+    return result
+
+
+@app.post("/sendMessage/mainGroup/video")
+async def send_video_group(video: UploadFile | str, caption: str = None):
+    result = await send_media(
+        chat_id=TEST_GROUP_ID, media=video, caption=caption, media_type="video"
+    )
+    return result
+
+
+@app.post("/post/mainChannel/video")
+async def post_video_channel(viedo: UploadFile | str, caption: str = None):
+    result = await send_media(
+        media=viedo, caption=caption, media_type="video", chat_id=TEST_CHANNEL_ID
+    )
+    return result
+
+
+@app.post("/sendMessage/audio")
+async def send_audio(chat_id: str | int, audio: UploadFile | str, caption: str | int):
+    result = await send_media(
+        chat_id=chat_id, media=audio, caption=caption, media_type="audio"
+    )
+    return result
+
+
+@app.post("/sendMessage/mainGroup/audio")
+async def send_audio_group(audio: UploadFile | str, caption: str = None):
+    result = await send_media(
+        chat_id=TEST_GROUP_ID, media=audio, caption=caption, media_type="audio"
+    )
+    return result
+
+
+@app.post("/post/mainChannel/audio")
+async def post_audio_channel(viedo: UploadFile | str, caption: str = None):
+    result = await send_media(
+        media=viedo, caption=caption, media_type="audio", chat_id=TEST_CHANNEL_ID
     )
     return result
