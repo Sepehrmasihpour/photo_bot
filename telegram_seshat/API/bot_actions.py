@@ -1,8 +1,7 @@
 import os
 from dotenv import load_dotenv
-from typing import Union, IO
+from typing import IO
 from aiohttp import FormData
-from urllib.parse import quote
 from aiohttp import ClientSession, FormData
 
 
@@ -13,20 +12,21 @@ load_dotenv()
 TEST_BOT_TOKEN = os.getenv("TEST_BOT_TOKEN")
 
 
-# * This function sends all the none text media to the desired chat_id using the telegram API
+# TODO: document the functions and the why and how things are the way they are use the full capibilities of better comments for this
+
+
 async def send_media_via_bot(
     media: str | IO[any], media_type: str, chat_id: str | int, caption: str = None
 ):
-    media_types = {
-        "photo": {"url": f"https://api.telegram.org/bot{TEST_BOT_TOKEN}/sendPhoto"},
-        "text": {"url": f"https://api.telegram.org/bot{TEST_BOT_TOKEN}/sendMessage"},
-        "audio": {"url": f"https://api.telegram.org/bot{TEST_BOT_TOKEN}/sendAudio"},
-        "video": {"url": f"https://api.telegram.org/bot{TEST_BOT_TOKEN}/sendVideo"},
-    }
+    media_types = ["photo", "text", "audio", "video"]
     input_media_type = media_type.lower()
     if input_media_type in media_types:
-        media_type_data = media_types[input_media_type]
-        url = media_type_data["url"]
+        general_url = f"https://api.telegram.org/bot{TEST_BOT_TOKEN}/send"
+        request_url = (
+            f"{general_url}{input_media_type.capitalize()}"
+            if input_media_type is not "text"
+            else f"{general_url}Message"
+        )
         data = FormData()
 
         data.add_field(input_media_type, media)
@@ -37,7 +37,7 @@ async def send_media_via_bot(
 
         async with ClientSession() as session:
             try:
-                async with session.post(url, data=data) as response:
+                async with session.post(request_url, data=data) as response:
                     response_json = await response.json()
                     if response_json.get("ok"):
                         return {
