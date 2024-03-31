@@ -1,19 +1,19 @@
-from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, UploadFile
-from bot_actions import *  # Importing necessary functions and classes for bot actions.
+from modules.bot_actions import *  # Importing necessary functions for bot actions.
+from data.data import telegram_ids
 
-load_dotenv()  # ! Load environment variables for configuration purposes.
 app = FastAPI()  # ! Initialize FastAPI app for creating RESTful APIs easily.
 
 # Retrieve various chat and group IDs from environment variables for flexibility and security.
-CHANNEL_ID = os.getenv("CHANNEL_ID")
-GROUP_ID = os.getenv("GROUP_ID")
-TEST_CHANNEL_ID = os.getenv("TEST_CHANNEL_ID")
-TEST_GROUP_ID = os.getenv("TEST_GROUP_ID")
+CHANNEL_ID = telegram_ids["CHANNEL_ID"]
+GROUP_ID = telegram_ids["GROUP_ID"]
 
 
 async def send_media(
-    media_type: str, chat_id: str | int, media: UploadFile | str, caption: str = None
+    media_type: str,
+    chat_id: str | int,
+    media: UploadFile | str,
+    caption: str | None = None,
 ):
     """
     Asynchronously sends different types of media to a specified chat using a bot.
@@ -42,18 +42,11 @@ async def send_media(
         media_type_data = media_types[input_media_type]
         if type(media) == str:
             # Directly send media if it's a string (path or URL).
-            result = (
-                await send_media_via_bot(
-                    chat_id=chat_id,
-                    media=media,
-                    caption=caption,
-                    media_type=input_media_type,
-                )
-                if caption
-                is not None  # ? Ensure using `is not None` for clarity when checking for None.
-                else await send_media_via_bot(
-                    chat_id=chat_id, media=media, media_type=input_media_type
-                )
+            result = await send_media_via_bot(
+                chat_id=chat_id,
+                media=media,
+                caption=caption,
+                media_type=input_media_type,
             )
             # Error handling.
             if "error" in result:
@@ -71,17 +64,11 @@ async def send_media(
                     detail=f"Unsupported file type. Please upload an {input_media_type}.",
                 )
             # Sending media file after validation.
-            result = (
-                await send_media_via_bot(
-                    chat_id=chat_id,
-                    media=media.file,
-                    caption=caption,
-                    media_type=input_media_type,
-                )
-                if caption is not None
-                else await send_media_via_bot(
-                    chat_id=chat_id, media=media.file, media_type=input_media_type
-                )
+            result = await send_media_via_bot(
+                chat_id=chat_id,
+                media=media.file,
+                caption=caption,
+                media_type=input_media_type,
             )
             if "error" in result:
                 raise HTTPException(status_code=400, detail=result["error"])
@@ -97,7 +84,10 @@ async def send_media(
 
 @app.post("/sendMessage/{chat_id}/{media_type}")
 async def sendMessage(
-    chat_id: str | int, media_type: str, media: str | UploadFile, caption: str = None
+    chat_id: str | int,
+    media_type: str,
+    media: str | UploadFile,
+    caption: str | None = None,
 ):
     """
     Endpoint to send media messages to specific chat IDs via HTTP POST request.
@@ -109,7 +99,7 @@ async def sendMessage(
 
     input_chat_id = chat_id  # Handling dynamic chat ID resolution.
     if type(chat_id) == str:
-        uniqe_chat_id = {"mainGroup": TEST_GROUP_ID, "mainChannel": TEST_CHANNEL_ID}
+        uniqe_chat_id = {"mainGroup": GROUP_ID, "mainChannel": CHANNEL_ID}
         input_chat_id = uniqe_chat_id[chat_id] if chat_id in uniqe_chat_id else chat_id
     result = await send_media(
         chat_id=input_chat_id,

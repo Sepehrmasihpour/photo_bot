@@ -1,22 +1,17 @@
-import os
-from dotenv import load_dotenv
 from typing import IO
 from aiohttp import FormData
 from aiohttp import ClientSession, FormData
+from data.data import telegram_ids
 
 
-load_dotenv()  # ! Loading environment variables from .env file for security and configurability.
-
-# environment variable retrievals
-TEST_BOT_TOKEN = os.getenv(
-    "TEST_BOT_TOKEN"
-)  # ! Retrieve the bot token set in the .env file.
-
-# TODO: Refactor the function to support asynchronous operations more efficiently.
+BOT_TOKEN = telegram_ids["BOT_TOKEN"]
 
 
 async def send_media_via_bot(
-    media: str | IO[any], media_type: str, chat_id: str | int, caption: str = None
+    media: str | IO[any],
+    media_type: str,
+    chat_id: str | int,
+    caption: str | None = None,
 ):
     """
     Asynchronously sends media to a specified chat using a Telegram bot.
@@ -38,11 +33,10 @@ async def send_media_via_bot(
     input_media_type = media_type.lower()
     if input_media_type in media_types:
         # Constructing the request URL based on the media type.
-        general_url = f"https://api.telegram.org/bot{TEST_BOT_TOKEN}/send"
+        general_url = f"https://api.telegram.org/bot{BOT_TOKEN}/send"
         request_url = (
             f"{general_url}{input_media_type.capitalize()}"
-            if input_media_type
-            != "text"  # ? "is not" is not correct for value comparison, replaced with "!=".
+            if input_media_type != "text"
             else f"{general_url}Message"
         )
         data = FormData()
