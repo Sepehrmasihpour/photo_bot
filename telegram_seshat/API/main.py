@@ -51,10 +51,7 @@ async def send_media(
             # Error handling.
             if "error" in result:
                 raise HTTPException(status_code=400, detail=result["error"])
-            return {
-                "message": f"Successfully sent the {input_media_type}",
-                "result": result,
-            }
+            return result
         else:
             # Validate MIME type for uploaded files.
             acceptable_mime_types = media_type_data["acceptable_mime_types"]
@@ -73,10 +70,7 @@ async def send_media(
             if "error" in result:
                 raise HTTPException(status_code=400, detail=result["error"])
 
-            return {
-                "message": f"Successfully sent the {input_media_type}",
-                "result": result,
-            }
+            return result
 
     else:
         return {"error": "wrong media type, input"}

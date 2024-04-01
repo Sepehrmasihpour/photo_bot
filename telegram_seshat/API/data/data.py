@@ -18,7 +18,7 @@ telegram_ids = {
 }
 
 # * This the test data for testing send_media endpoint
-send_media_test_cases = [
+media_test_cases = [
     {
         "chat_id": "mainGroup",
         "media_type": "photo",

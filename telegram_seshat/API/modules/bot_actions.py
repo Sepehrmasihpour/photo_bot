@@ -56,10 +56,7 @@ async def send_media_via_bot(
                     response_json = await response.json()
                     if response_json.get("ok"):
                         # Successful API call.
-                        return {
-                            "message": f"{input_media_type} sent successfully",
-                            "result": response_json,
-                        }
+                        return response_json
                     else:
                         # Handling cases where Telegram API returns an error.
                         return {
