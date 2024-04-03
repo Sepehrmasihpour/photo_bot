@@ -1,17 +1,25 @@
+# Import necessary modules and test data
 from data.data import media_test_cases, telegram_ids
 from fastapi.testclient import TestClient
 from main import app
 
+# Initialize the TestClient with the FastAPI app
 client = TestClient(app)
 
 
 def media_test_results():
+    # Load test cases and initialize result storage
     test_cases = media_test_cases
     results = []
+
+    # Initialize placeholders for request data
     data = {}
     files = {}
+
+    # Iterate through each test case
     for case in test_cases:
 
+        # If media is a string, prepare data payload and make POST request
         if type(case["media"]) == str:
             data = {"media": case["media"], "caption": case["caption"]}
             response = client.post(
@@ -20,6 +28,7 @@ def media_test_results():
             )
             results.append(response)
         else:
+            # If media is not a string, prepare files payload for multipart/form-data
             files["media"] = case["media"]
             data["caption"] = case["caption"]
             response = client.post(
@@ -32,6 +41,7 @@ def media_test_results():
 
 
 def expected_media_test_results():
+    # Prepare expected results based on test cases
     test_cases = media_test_cases
     expected_results = []
     expected_result = {
@@ -40,13 +50,15 @@ def expected_media_test_results():
                 "id": "",
             },
             "caption": None,
-            # Note: Skipping dynamic fields like 'message_id', 'date', and 'photo' for direct comparison
         },
     }
+
+    # Iterate through test cases to set expected results
     for case in test_cases:
         if case["caption"]:
             expected_result["result"]["caption"] = case["caption"]
 
+        # Check for specific chat IDs and adjust accordingly
         if case["chat_id"] != "mainGroup" or "mainchannel":
             expected_result["result"]["chat"]["id"] = case["chat_id"]
         else:
@@ -58,11 +70,13 @@ def expected_media_test_results():
     return expected_results
 
 
+# Execute the tests and store results
 media_results = media_test_results()
 media_expected_results = expected_media_test_results()
 
 
 def test_send_media_status():
+    # Test to ensure each response status code is 200
     test_results = media_results
     for response in test_results:
         try:
@@ -73,6 +87,7 @@ def test_send_media_status():
 
 
 def test_send_media_chat_id():
+    # Test to ensure response chat ID matches expected chat ID
     test_results = media_results
     expected_results = media_expected_results
     for response, expected_response in zip(test_results, expected_results):
@@ -93,6 +108,7 @@ def test_send_media_chat_id():
 
 
 def test_send_media_caption():
+    # Test to ensure response caption matches expected caption
     test_results = media_results
     expected_results = media_expected_results
     for response, expected_response in zip(test_results, expected_results):
