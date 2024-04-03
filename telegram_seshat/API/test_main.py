@@ -1,9 +1,9 @@
-# Import necessary modules and test data
+# zImport necessary modules and test data
 from data.data import media_test_cases, telegram_ids
 from fastapi.testclient import TestClient
 from main import app
 
-# Initialize the TestClient with the FastAPI app
+# !Initialize the TestClient with the FastAPI app
 client = TestClient(app)
 
 
@@ -79,11 +79,10 @@ def test_send_media_status():
     # Test to ensure each response status code is 200
     test_results = media_results
     for response in test_results:
-        try:
-            assert response.status_code == 200
-        except AssertionError as e:
-            print(f"status_code is not 200\nError: {e}\nrespnse:{response}")
-            raise AssertionError
+        response_json = response.json
+        assert (
+            response.status_code == 200
+        ), f"status_code is not 200\nrespnse:{response_json}"
 
 
 def test_send_media_chat_id():
@@ -92,19 +91,11 @@ def test_send_media_chat_id():
     expected_results = media_expected_results
     for response, expected_response in zip(test_results, expected_results):
         response_json = response.json()
-        try:
-            assert (
-                str(response_json["result"]["chat"]["id"])
-                == expected_response["result"]["chat"]["id"]
-            )
-        except AssertionError:
-            print(
-                f"""test case response chat_id does not match the expected response chat_id
-                \nresponse chat_id:{response_json["result"]['chat']['id']} != expected response chat_id:{expected_response["result"]['chat']['id']}
-                  """
-            )
-
-            raise AssertionError
+        chat_id = str(response_json["result"]["chat"]["id"])
+        expected_chat_id = expected_response["result"]["chat"]["id"]
+        assert (
+            chat_id == expected_chat_id
+        ), f"The chatID is not as expected.\nchatID:{chat_id}\nexpected chat ID:{expected_chat_id}"
 
 
 def test_send_media_caption():
@@ -113,16 +104,12 @@ def test_send_media_caption():
     expected_results = media_expected_results
     for response, expected_response in zip(test_results, expected_results):
         response_json = response.json()
-        try:
-            if expected_response["result"]["caption"]:
-                assert (
-                    response_json["result"]["caption"]
-                    == expected_response["result"]["caption"]
-                )
-        except:
-            print(
-                f"""test case response caption does not match the expected response caption
-                \nresponse result:{response_json["result"]} != expected response caption:{expected_response["result"]["caption"]}
-                  """
-            )
-            raise AssertionError
+        expected_caption = expected_response["result"]["caption"]
+        caption = response_json.get("result", {}).get("caption", None)
+
+        if expected_caption:
+            assert (
+                caption == expected_caption
+            ), f"The caption is not as expected.\nResponse caption: {caption}\nExpected caption: {expected_caption}"
+        else:
+            assert caption is None, f"Expected no caption, but got: {caption}"

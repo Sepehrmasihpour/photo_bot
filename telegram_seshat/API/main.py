@@ -4,6 +4,8 @@ from data.data import telegram_ids
 
 app = FastAPI()  # ! Initialize FastAPI app for creating RESTful APIs easily.
 
+# !ERROR : The sendMEssage endpoint capiton param dosent work as in it doesent send the message with the caption
+
 # Retrieve various chat and group IDs from environment variables for flexibility and security.
 CHANNEL_ID = telegram_ids["CHANNEL_ID"]
 GROUP_ID = telegram_ids["GROUP_ID"]
