@@ -4,7 +4,9 @@ from data.data import telegram_ids
 
 app = FastAPI()  # ! Initialize FastAPI app for creating RESTful APIs easily.
 
-# !ERROR : The sendMEssage endpoint capiton param dosent work as in it doesent send the message with the caption
+#! ERROR : The sendMEssage endpoint capiton param dosent work as in it doesent send the message with the caption
+#! REALATED TO ABOVE ERROR: rewrite all the pointless conditonal variables. The type control in the param will do the trick.
+
 
 # Retrieve various chat and group IDs from environment variables for flexibility and security.
 CHANNEL_ID = telegram_ids["CHANNEL_ID"]
@@ -15,7 +17,7 @@ async def send_media(
     media_type: str,
     chat_id: str | int,
     media: UploadFile | str,
-    caption: str | None = None,
+    caption: str = None,
 ):
     """
     Asynchronously sends different types of media to a specified chat using a bot.
@@ -44,11 +46,19 @@ async def send_media(
         media_type_data = media_types[input_media_type]
         if type(media) == str:
             # Directly send media if it's a string (path or URL).
-            result = await send_media_via_bot(
-                chat_id=chat_id,
-                media=media,
-                caption=caption,
-                media_type=input_media_type,
+            result = (
+                await send_media_via_bot(
+                    chat_id=chat_id,
+                    media=media,
+                    caption=caption,
+                    media_type=input_media_type,
+                )
+                if caption
+                else await send_media_via_bot(
+                    chat_id=chat_id,
+                    media=media,
+                    media_type=input_media_type,
+                )
             )
             # Error handling.
             if "error" in result:
@@ -63,11 +73,19 @@ async def send_media(
                     detail=f"Unsupported file type. Please upload an {input_media_type}.",
                 )
             # Sending media file after validation.
-            result = await send_media_via_bot(
-                chat_id=chat_id,
-                media=media.file,
-                caption=caption,
-                media_type=input_media_type,
+            result = (
+                await send_media_via_bot(
+                    chat_id=chat_id,
+                    media=media.file,
+                    caption=caption,
+                    media_type=input_media_type,
+                )
+                if caption
+                else await send_media_via_bot(
+                    chat_id=chat_id,
+                    media=media.file,
+                    media_type=input_media_type,
+                )
             )
             if "error" in result:
                 raise HTTPException(status_code=400, detail=result["error"])
@@ -83,7 +101,7 @@ async def sendMessage(
     chat_id: str | int,
     media_type: str,
     media: str | UploadFile,
-    caption: str | None = None,
+    caption: str = None,
 ):
     """
     Endpoint to send media messages to specific chat IDs via HTTP POST request.
@@ -97,11 +115,19 @@ async def sendMessage(
     if type(chat_id) == str:
         uniqe_chat_id = {"mainGroup": GROUP_ID, "mainChannel": CHANNEL_ID}
         input_chat_id = uniqe_chat_id[chat_id] if chat_id in uniqe_chat_id else chat_id
-    result = await send_media(
-        chat_id=input_chat_id,
-        media=media,
-        media_type=media_type,
-        caption=caption,
+    result = (
+        await send_media(
+            chat_id=input_chat_id,
+            media=media,
+            media_type=media_type,
+            caption=caption,
+        )
+        if caption
+        else await send_media(
+            chat_id=input_chat_id,
+            media=media,
+            media_type=media_type,
+        )
     )
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])

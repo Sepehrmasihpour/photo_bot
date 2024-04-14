@@ -11,7 +11,7 @@ async def send_media_via_bot(
     media: str | IO[any],
     media_type: str,
     chat_id: str | int,
-    caption: str | None = None,
+    caption: str = None,
 ):
     """
     Asynchronously sends media to a specified chat using a Telegram bot.
@@ -41,13 +41,12 @@ async def send_media_via_bot(
         )
         data = FormData()
 
-        data.add_field(input_media_type, media)  # Adding media to the FormData.
-        data.add_field("chat_id", chat_id)  # Specifying the chat_id in the FormData.
-
-        if caption:
+        if caption and input_media_type != "text":
             data.add_field(
                 "caption", caption
             )  # Optional: Adding a caption if provided.
+        data.add_field(input_media_type, media)  # Adding media to the FormData.
+        data.add_field("chat_id", chat_id)  # Specifying the chat_id in the FormData.
 
         # Asynchronous request to send the media via Telegram API.
         async with ClientSession() as session:
