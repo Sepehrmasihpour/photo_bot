@@ -1,6 +1,5 @@
 import os
 from dotenv import load_dotenv
-from io import BytesIO
 
 
 load_dotenv()  # ! Load environment variables for configuration purposes.
