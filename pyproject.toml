@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "telegram-seshat"
+name = "seshat"
 version = "0.1.0"
 description = "This app will handle the telegram side of seshat dealings.'"
 authors = ["Sepehrmasihpour <sepehr.masihpour1381@gmail.com>"]
