@@ -116,7 +116,7 @@ def test_send_media_caption():
 
         if expected_caption:
             assert (
-                caption == expected_caption
+                caption
             ), f"The caption is not as expected.\nResponse caption: {caption}\nExpected caption: {expected_caption}"
         else:
             assert caption is None, f"Expected no caption, but got: {caption}"

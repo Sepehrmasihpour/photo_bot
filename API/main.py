@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, UploadFile
-from seshat.telegram_seshat.API.bot_actions import *  # Importing necessary functions for bot actions.
+from bot_actions import *  # Importing necessary functions for bot actions.
 from data import telegram_ids
 
 app = FastAPI()  # ! Initialize FastAPI app for creating RESTful APIs easily.
