@@ -1,7 +1,9 @@
 from typing import IO
 from aiohttp import FormData
 from aiohttp import ClientSession, FormData
-from data.data import telegram_ids
+from data import telegram_ids
+
+#  ! change the method used to make api calls here. make it the same as the one in the main_test file. Its simpler.
 
 
 BOT_TOKEN = telegram_ids["BOT_TOKEN"]
@@ -41,13 +43,12 @@ async def send_media_via_bot(
         )
         data = FormData()
 
-        data.add_field(input_media_type, media)  # Adding media to the FormData.
-        data.add_field("chat_id", chat_id)  # Specifying the chat_id in the FormData.
-
-        if caption:
+        if caption and input_media_type != "text":
             data.add_field(
                 "caption", caption
             )  # Optional: Adding a caption if provided.
+        data.add_field(input_media_type, media)  # Adding media to the FormData.
+        data.add_field("chat_id", chat_id)  # Specifying the chat_id in the FormData.
 
         # Asynchronous request to send the media via Telegram API.
         async with ClientSession() as session:
