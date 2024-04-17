@@ -1,6 +1,6 @@
-# Import necessary modules and test data
+# Import necessary modules and test params
 #! This import dosent work inside the tests/endpoints directory find out why and fix it\
-from data.data import (
+from data import (
     media_test_cases,
     telegram_ids,
 )
@@ -20,28 +20,27 @@ def media_test_results():
     test_cases = media_test_cases
     results = []
 
-    # Initialize placeholders for request data
-    data = {}
-    files = {}
-
     # Iterate through each test case
     for case in test_cases:
-
-        # If media is a string, prepare data payload and make POST request
+        # Initialize placeholders for request data
+        params = {"caption": case["caption"]}
+        data = {}
+        files = {}
+        # If media is a string, prepare params payload and make POST request
         if type(case["media"]) == str:
-            data = {"media": case["media"], "caption": case["caption"]}
+            data["media"] = case["media"]
             response = client.post(
                 f"/sendMessage/{case['chat_id']}/{case['media_type']}",
+                params=params,
                 data=data,
             )
             results.append(response)
         else:
-            # If media is not a string, prepare files payload for multipart/form-data
+            # If media is not a string, prepare files payload for multipart/form-
             files["media"] = case["media"]
-            data["caption"] = case["caption"]
             response = client.post(
                 f"/sendMessage/{case['chat_id']}/{case['media_type']}",
-                data=data,
+                params=params,
                 files=files,
             )
             results.append(response)
