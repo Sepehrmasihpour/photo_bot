@@ -11,8 +11,8 @@ from main import app
 # !Initialize the TestClient with the FastAPI app
 client = TestClient(app)
 
-
 # !ERROR:there is no test for sending local files in to the api
+#! change the caotion test so that it will only check if the caption value is not None, Don't be fancy.
 
 
 def media_test_results():
@@ -120,3 +120,4 @@ def test_send_media_caption():
             ), f"The caption is not as expected.\nResponse caption: {caption}\nExpected caption: {expected_caption}"
         else:
             assert caption is None, f"Expected no caption, but got: {caption}"
+ 0

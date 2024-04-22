@@ -4,10 +4,6 @@ from data import telegram_ids
 
 app = FastAPI()  # ! Initialize FastAPI app for creating RESTful APIs easily.
 
-#! The Caption param is dying in one of the places it's passing find out which, print output of each of the checkpoints insted of passing them.
-#! rewrite all the pointless conditonal variables. The type control in the param will do the trick.
-
-
 # Retrieve various chat and group IDs from environment variables for flexibility and security.
 CHANNEL_ID = telegram_ids["CHANNEL_ID"]
 GROUP_ID = telegram_ids["GROUP_ID"]
