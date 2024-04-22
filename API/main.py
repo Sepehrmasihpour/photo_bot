@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, UploadFile
 from bot_actions import *  # Importing necessary functions for bot actions.
-from data import telegram_ids
+from data import telegram_ids, uniqe_chat_ids
 
 app = FastAPI()  # ! Initialize FastAPI app for creating RESTful APIs easily.
 
@@ -76,6 +76,14 @@ async def send_media(
         return {"error": "wrong media type, input"}
 
 
+def uniqe_id_identifier(chat_id: str | int):
+    input_chat_id = chat_id  # Handling dynamic chat ID resolution.
+    if type(chat_id) == str:
+        uniqe_chat_id = uniqe_chat_ids
+        input_chat_id = uniqe_chat_id[chat_id] if chat_id in uniqe_chat_id else chat_id
+    return input_chat_id
+
+
 @app.post("/sendMessage/{chat_id}/{media_type}")
 async def sendMessage(
     chat_id: str | int,
@@ -91,10 +99,7 @@ async def sendMessage(
     Parameters mirror `send_media` function, with the addition of handling special chat ID mappings.
     """
 
-    input_chat_id = chat_id  # Handling dynamic chat ID resolution.
-    if type(chat_id) == str:
-        uniqe_chat_id = {"mainGroup": GROUP_ID, "mainChannel": CHANNEL_ID}
-        input_chat_id = uniqe_chat_id[chat_id] if chat_id in uniqe_chat_id else chat_id
+    input_chat_id = uniqe_id_identifier(chat_id)
     result = await send_media(
         chat_id=input_chat_id,
         media=media,
@@ -104,3 +109,12 @@ async def sendMessage(
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
     return result
+
+
+# * Now I will try to write a endpoitn that will get the update of pacific chats like the main group or anyother I want.
+# * It needs to have the capability to hold the update for a short while so that I can do sone logic to it and than it can delete it or pass it.
+
+
+@app.get("getUpdates/{chat_id}/{media_type}")
+async def getUpdates(chat_id: str | int, media_type: str):
+    pass

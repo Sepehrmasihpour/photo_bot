@@ -16,6 +16,11 @@ telegram_ids = {
     # "BOT_TOKEN": os.getenv("BOT_TOKEN"),
 }
 
+uniqe_chat_ids = {
+    "mainGroup": telegram_ids["GROUP_ID"],
+    "mainChannel": telegram_ids["CHANNEL_ID"],
+}
+
 # * This the test data for testing send_media endpoint
 media_test_cases = [
     {
