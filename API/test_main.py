@@ -13,7 +13,6 @@ from main import app
 client = TestClient(app)
 
 # !ERROR:there is no test for sending local files in to the api
-#! change the caotion test so that it will only check if the caption value is not None, Don't be fancy.
 
 
 def media_test_results():
