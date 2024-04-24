@@ -42,7 +42,7 @@ async def send_media(
         media_type_data = media_types[input_media_type]
         if type(media) == str:
             # Directly send media if it's a string (path or URL).
-            result = await send_media_via_bot(
+            result = send_media_via_bot(
                 chat_id=chat_id,
                 media=media,
                 caption=caption,
@@ -61,7 +61,7 @@ async def send_media(
                     detail=f"Unsupported file type. Please upload an {input_media_type}.",
                 )
             # Sending media file after validation.
-            result = await send_media_via_bot(
+            result = send_media_via_bot(
                 chat_id=chat_id,
                 media=media.file,
                 caption=caption,
