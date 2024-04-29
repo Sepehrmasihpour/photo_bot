@@ -1,9 +1,32 @@
 from typing import IO
 from data import telegram_ids
 import httpx
+from typing import Optional, Dict, Any
+
 
 # Extracting the BOT_TOKEN from the data module.
 BOT_TOKEN = telegram_ids["BOT_TOKEN"]
+
+# ! make a function for sneding telegram requests geres otherwise it will be repeated over and over again
+#! make it so that it will have a request argument with the type string and basicly use the logic in the send_media_via_bot function to make it
+
+
+def telegram_api_request(
+    request: str,
+    method: str = "GET",
+    params: Optional[Dict[str, Any]] = None,
+    data: Optional[Dict[str, Any]] = None,
+    files: Optional[Dict[str, Any]] = None,
+):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/{request}"
+    try:
+        if method.upper() == "POST":
+            response = httpx.post(url, params=params, data=data, files=files)
+        else:
+            response = httpx.get(url, params=params)
+        return response.json()
+    except Exception as e:
+        return {"error": str(e)}
 
 
 def send_media_via_bot(
@@ -12,32 +35,6 @@ def send_media_via_bot(
     chat_id: str | int,
     caption: str | None = None,
 ):
-    """
-    Sends media (photo, audio, video) or text message via Telegram bot.
-
-    Args:
-        media (str or IO[any]): The media content to be sent. It can be a file_id,url(str) or an opened file (IO[any]).
-        media_type (str): The type of media to be sent. It should be one of: 'photo', 'audio', 'video', 'text'.
-        chat_id (str or int): The ID of the Telegram chat where the media will be sent.
-        caption (str, optional): Caption for the media (only applicable for photo, audio, video). Defaults to None.
-
-    Returns:
-        dict: A dictionary containing the response from the Telegram API.
-              If the request is successful, the response will contain the sent message data.
-              If an error occurs, the response will contain an 'error' key with a description of the error.
-
-    Raises:
-        None
-
-    Note:
-        This function uses the httpx library to make HTTP requests to the Telegram Bot API.
-
-    Example:
-        # Sending a photo with caption
-        response = send_media_via_bot("path/to/photo.jpg", "photo", 123456, caption="Check this out!")
-        print(response)
-    """
-
     # List of supported media types
     media_types = ["photo", "text", "audio", "video"]
 
@@ -47,52 +44,35 @@ def send_media_via_bot(
     # Checking if the input media type is valid
     if input_media_type in media_types:
         # Constructing the request URL based on the media type.
-        general_url = f"https://api.telegram.org/bot{BOT_TOKEN}/send"
-        request_url = (
-            f"{general_url}{input_media_type.capitalize()}"
+        request = (
+            f"send{input_media_type.capitalize()}"
             if input_media_type != "text"
-            else f"{general_url}Message"
+            else f"sendMessage"
         )
+        data = {"chat_id": chat_id}
+        files = None
 
-        try:
-            # Handling different types of media content
-            if type(media) == str:
-                # If media is a file path
-                if caption:
-                    response = httpx.post(
-                        request_url,
-                        params={"caption": caption, "chat_id": chat_id},
-                        data={input_media_type: media},
-                    )
-                else:
-                    response = httpx.post(
-                        request_url,
-                        params={"chat_id": chat_id},
-                        data={input_media_type: media},
-                    )
-            else:
-                # If media is an opened file
-                response = httpx.post(
-                    request_url,
-                    params={"caption": caption, "chat_id": chat_id},
-                    files={input_media_type: media},
-                )
+        if input_media_type != "text":
+            if isinstance(media, str):  # Assuming media as URL or file_id
+                data[input_media_type] = media
+            else:  # Assuming media is an opened file
+                files = {input_media_type: media}
+        else:
+            data["text"] = (
+                media  # In case of text, the message content goes directly into data
+            )
 
-            # Parsing the response JSON
-            response_json = response.json()
+        if caption:
+            data["caption"] = caption
 
-            # Checking if the request was successful
-            if response_json.get("ok"):
-                return response_json
-            else:
-                # Returning error response if request failed
-                return {
-                    "error": response_json.get("description", "Unknown error occurred")
-                }
-        except Exception as e:
-            # Returning error response if an exception occurred during request
-            return {"error": str(e)}
+        return telegram_api_request(request, "POST", data=data, files=files)
 
     else:
         # Returning error response for unsupported media type
         return {"error": "unacceptable media type"}
+
+
+def telegram_getUpdates(allowed_updates: list, limit: int, timeout: int):
+    request = "getUpdates"
+    params = {"allowed_updates": allowed_updates, "limit": limit, "timeout": timeout}
+    return telegram_api_request(request=request, params=params)

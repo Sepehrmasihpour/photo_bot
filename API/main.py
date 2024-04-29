@@ -115,6 +115,8 @@ async def sendMessage(
 # * It needs to have the capability to hold the update for a short while so that I can do sone logic to it and than it can delete it or pass it.
 
 
-@app.get("getUpdates/{chat_id}/{media_type}")
-async def getUpdates(chat_id: str | int, media_type: str):
-    pass
+@app.get("/getUpdates")
+async def getUpdates(
+    allowed_updates: list[str] = [], limit: int = 100, timeout: int = 0
+):
+    telegram_getUpdates(allowed_updates=allowed_updates, limit=limit, timeout=timeout)
