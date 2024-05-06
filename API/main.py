@@ -119,4 +119,7 @@ async def sendMessage(
 async def getUpdates(
     allowed_updates: list[str] = [], limit: int = 100, timeout: int = 0
 ):
-    telegram_getUpdates(allowed_updates=allowed_updates, limit=limit, timeout=timeout)
+    result = telegram_getUpdates(
+        allowed_updates=allowed_updates, limit=limit, timeout=timeout
+    )
+    return result

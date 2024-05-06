@@ -24,7 +24,8 @@ def telegram_api_request(
             response = httpx.post(url, params=params, data=data, files=files)
         else:
             response = httpx.get(url, params=params)
-        return response.json()
+        response_json = response.json()
+        return response_json
     except Exception as e:
         return {"error": str(e)}
 
@@ -75,4 +76,5 @@ def send_media_via_bot(
 def telegram_getUpdates(allowed_updates: list, limit: int, timeout: int):
     request = "getUpdates"
     params = {"allowed_updates": allowed_updates, "limit": limit, "timeout": timeout}
-    return telegram_api_request(request=request, params=params)
+    response = telegram_api_request(request=request, params=params)
+    return response
