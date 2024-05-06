@@ -1,5 +1,3 @@
-# TODO:add the artist of the music if it exists to the caption and in a form of a hashtag for navigation
-
 # Import necessary libraries for bot operation
 import logging
 import os
@@ -12,6 +10,10 @@ from telegram.ext import (
     CommandHandler,
     ContextTypes,
 )
+
+#! change the bot setting so that it will only use the seshat api and nothing more.
+
+# TODO:add the artist of the music if it exists to the caption and in a form of a hashtag for navigation
 
 # Load environment variables from .env file to configure bot credentials and settings
 load_dotenv()
