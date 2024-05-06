@@ -14,6 +14,8 @@ client = TestClient(app)
 
 # !ERROR:there is no test for sending local files in to the api
 
+# * The below section is for the sendMedia method.
+
 
 def media_test_results():
     # Load test cases and initialize result storage
@@ -144,3 +146,15 @@ def test_send_media_caption():
             ), f"The caption is not as expected.\nResponse caption: {caption}\nExpected caption: {expected_caption}"
         else:
             assert caption is None, f"Expected no caption, but got: {caption}"
+
+
+# * The below section is for the getUpdates method.
+
+
+def test_getUpdates_status():
+    # Tests if the getUpdates method returns an 200 status code
+    response = client.get("/getUpdates")
+    response_json = response.json
+    assert (
+        response["ok"] == True
+    ), f"there is an error in  the getupdate\nrespnse:{response_json}"
