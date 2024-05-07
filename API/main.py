@@ -4,6 +4,8 @@ from data import telegram_ids, uniqe_chat_ids
 
 app = FastAPI()  # ! Initialize FastAPI app for creating RESTful APIs easily.
 
+#! the allowed_updates params are not working fix it and make some tests for it.
+
 # Retrieve various chat and group IDs from environment variables for flexibility and security.
 CHANNEL_ID = telegram_ids["CHANNEL_ID"]
 GROUP_ID = telegram_ids["GROUP_ID"]
