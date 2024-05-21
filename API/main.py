@@ -118,10 +118,6 @@ async def sendMessage(
 
 
 @app.get("/getUpdates")
-async def getUpdates(
-    allowed_updates: list[str] = [], limit: int = 100, timeout: int = 0
-):
-    result = telegram_getUpdates(
-        allowed_updates=allowed_updates, limit=limit, timeout=timeout
-    )
+async def getUpdates(allowed_updates: list[str] = [], offset: int = 0):
+    result = telegram_getUpdates(allowed_updates=allowed_updates, offset=offset)
     return result

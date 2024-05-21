@@ -73,8 +73,12 @@ def send_media_via_bot(
         return {"error": "unacceptable media type"}
 
 
-def telegram_getUpdates(allowed_updates: list, limit: int, timeout: int):
+def telegram_getUpdates(allowed_updates: list = [], offset: int = 0):
     request = "getUpdates"
-    params = {"allowed_updates": allowed_updates, "limit": limit, "timeout": timeout}
-    response = telegram_api_request(request=request, params=params)
+    params = {"allowed_updates": allowed_updates, "offset": offset}
+    response = (
+        telegram_api_request(request=request, params=params)
+        if allowed_updates != []
+        else telegram_api_request(request=request)
+    )
     return response
