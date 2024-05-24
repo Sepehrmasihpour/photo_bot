@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "seshat"
+name = "seshat_api"
 version = "0.1.0"
-description = "This app will handle the telegram side of seshat dealings.'"
+description = "This is the api for seshat requests"
 authors = ["Sepehrmasihpour <sepehr.masihpour1381@gmail.com>"]
 license = "Proprietary"
 package-mode = false
@@ -9,7 +9,6 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.12"
 python-dotenv = "^1.0.1"
-python-telegram-bot = "^21.0.1"
 fastapi = "^0.110.0"
 uvicorn = {extras = ["standard"], version = "^0.28.0"}
 requests = "^2.31.0"
