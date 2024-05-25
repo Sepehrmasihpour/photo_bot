@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "seshat_bot"
+version = "0.1.0"
+description = "This bot will handle the telegram side of seshat dealings.'"
+authors = ["Sepehrmasihpour <sepehr.masihpour1381@gmail.com>"]
+license = "Proprietary"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+python-dotenv = "^1.0.1"
+python-telegram-bot = "^21.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
