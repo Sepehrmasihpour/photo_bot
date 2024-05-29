@@ -14,6 +14,9 @@ telegram_ids = {
     # "CHANNEL_ID": os.getenv("CHANNEL_ID"),
     # "GROUP_ID ": os.getenv("GROUP_ID"),
     # "BOT_TOKEN": os.getenv("BOT_TOKEN"),
+    "TEST_USER_BOT_TOKEN": os.getenv(
+        "TEST_USER_BOT_TOKEN"
+    ),  #! This is a bot that we will use to substitude for a user in regards to tests.
 }
 
 uniqe_chat_ids = {

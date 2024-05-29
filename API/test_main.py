@@ -1,19 +1,22 @@
 # Import necessary modules and test params
 #! This import dosent work inside the tests/endpoints directory find out why and fix it\
+import time
+from fastapi.testclient import TestClient
+from main import app
+from bot_actions import send_media_via_bot
 from data import (
     media_test_cases,
     uniqe_chat_ids,
     telegram_ids,
 )
-from fastapi.testclient import TestClient
-from main import app
-import time
 
 
 # !Initialize the TestClient with the FastAPI app
 client = TestClient(app)
 
 # !ERROR:there is no test for sending local files in to the api
+
+#! -------------------------------------------------------sendMedia-----------------------------------------------
 
 # * The below section is for the sendMedia method.
 
@@ -149,9 +152,12 @@ def test_send_media_caption():
             assert caption is None, f"Expected no caption, but got: {caption}"
 
 
+#! -------------------------------------------------------getUpdate-----------------------------------------------
+
 # *The below section is for the getUpdates method.
 
 
+# the data needed for the getUpdates tests
 def getUpdate_results():
     """
     Retrieves updates from the Telegram API.
@@ -169,79 +175,78 @@ def getUpdate_results():
         return None
 
 
-getUpdate_results_json = getUpdate_results()
+getUpdate_response_json = getUpdate_results()
+getUpdate_response_results = getUpdate_response_json["result"]
 
-getUpdate_status = False  # Initialize the global status variable
+
+def getUpdate_status():
+    """
+    sees if the getUpdate method recives an ok call back from the api or 200
+    """
+    response = getUpdate_response_json
+    if response and response["ok"] == True:
+        return True
+    return False
+
+
+def is_there_update(updates: list, method_status: bool):
+    """
+    Checks if there are updates available for testing.
+    """
+    updates = getUpdate_response_json
+    updates_result = updates.get("result", [])
+    method_status = getUpdate_status()
+
+    if updates_result == []:
+        return False
+
+    return True
+
+
+def not_enough_updates(updates: list):
+    """
+    Checks if there are enough updates, if not, prompts the user to add updates.
+    """
+    if len(updates) < 3:
+        return False
+    return True
+
+
+def recive_test_updates():
+    """
+    This funciton will send 4 messages of various media types to the test group that the bot can recive updates.
+    This funcitn should be used where there are not enough updates to do tests on.
+    It uses the send_medi_via_bot function in the bot_actions file.
+    """
+    global getUpdate_response_json
+    global getUpdate_response_results
+
+    test_param = True
+    chat_id_param = telegram_ids["GROUP_ID"]
+    media_type_params = ["text", "photo", "audio", "text"]
+    media_params = [
+        "test_user text message",
+        "https://fastly.picsum.photos/id/326/200/200.jpg?hmac=T_9V3kc7xrK46bj8WndwDhPuvpbjnAM3wfL_I7Gu6yA",
+        "CQACAgQAAx0EfU-ioAADsmYCBRCwx7kBIWmwrASYWOy06FDhAAKmEwACJysQUEYwlN5ZdJodNAQ",
+        "test_user text message(2)",
+    ]
+    caption_params = [None, "Test_user photo message", "test_user audio message", None]
+    for i in range(4):
+        send_media_via_bot(
+            media=media_params[i],
+            media_type=media_type_params[i],
+            chat_id=chat_id_param,
+            test=test_param,
+        )
+    getUpdate_response_json = getUpdate_results()
+    getUpdate_response_results = getUpdate_response_json["result"]
 
 
 def test_getUpdates_status():
     """
     Tests the status of the getUpdates method.
     """
-    global getUpdate_status
-    response = getUpdate_results_json
+    response_status = getUpdate_status()
     assert (
-        response and response["ok"] == True
-    ), f"Error in the getUpdate response: {response}"
-    getUpdate_status = True
-
-
-def user_add_update():
-    """
-    Asks the user to add updates if not enough updates are detected.
-    """
-    print(
-        """No/not enough updates detected: This will deactivate the next tests for the getUpdate method and they will return failed.
-        Send 3 messages of any kind to anywhere that this getUpdate method has access to and type,
-        If you don't want to, choose no. If you have sent the 3 messages, choose yes.
-        ('y' for yes and 'n' for no, 'n' is default. After 30s, the default will be chosen)
-        (P.S. if something besides the two options is written, the default option will be chosen)
-        """
-    )
-    user_answer = ""
-    for a in range(31):
-        user_answer = input().strip().lower()
-        if user_answer:
-            break
-        time.sleep(1)
-
-    if user_answer == "y":
-        global getUpdate_results_json
-        getUpdate_results_json = getUpdate_results()
-        return True
-    return False
-
-
-def not_enough_updates(updates):
-    """
-    Checks if there are enough updates, if not, prompts the user to add updates.
-    """
-    while len(updates) < 3:
-        if not user_add_update():
-            return False
-        updates = getUpdate_results_json["result"]
-    return True
-
-
-def is_there_update():
-    """
-    Checks if there are updates available.
-    """
-    updates = getUpdate_results_json
-    if not updates:
-        return False
-
-    updates_result = updates.get("result", [])
-    method_status = getUpdate_status
-
-    if not method_status:
-        return False
-
-    return not_enough_updates(updates_result)
-
-
-def test_getUpdate_number():
-    """
-    Tests the number of updates.
-    """
-    assert is_there_update() == True, "Not enough updates"
+        response_status == True
+    ), f"Error in the getUpdate response: {getUpdate_response_json}"

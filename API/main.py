@@ -24,6 +24,7 @@ async def send_media(
     Validates the media type and its MIME type before sending to ensure compatibility.
 
     Parameters:
+
     - media_type: Type of the media (photo, audio, video, text).
     - chat_id: The chat ID where the media will be sent. Accepts both string and integer values.
     - media: The media to be sent, can be a path (str) or an uploaded file (UploadFile).
