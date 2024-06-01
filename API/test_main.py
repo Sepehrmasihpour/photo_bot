@@ -251,7 +251,7 @@ def test_getUpdate_status():
 
 def enough_updates():
     updates_result = getUpdate_response_results
-    update_result_numbers = updates_result.len()
+    update_result_numbers = len(updates_result)
     if not updates_result:
         return False
     if update_result_numbers < 4:
@@ -259,14 +259,18 @@ def enough_updates():
     return True
 
 
-def ask_user_for_updates():
+def ask_user_for_updates(
+    offset: int | None = None, selected_updates: list[str] | None = None
+):
     global getUpdate_response_json
     global getUpdate_response_results
     print(
         "please send atleast 4 messages of any kind to the bot\n I will wait for 30 seconds for you, if you don't do this we will set the test as a faillure"
     )
     time.sleep(20)
-    getUpdate_response_json = getUpdate_results()
+    getUpdate_response_json = getUpdate_results(
+        offset=offset, selected_updates=selected_updates
+    )
     getUpdate_response_results = getUpdate_response_json["result"]
 
 
@@ -276,16 +280,16 @@ def test_getUpdates_offset():
         assert (
             status
         ), "because of the not ok status of the method This test cannot be excuted"
-    enough_updates = enough_updates()
-    if not enough_updates:
+    good_update_number = enough_updates()
+    if not good_update_number:
         ask_user_for_updates()
-    enough_updates = enough_updates()
-    if not enough_updates:
-        assert enough_updates, "there are not enough updates for the tests"
+    good_update_number = enough_updates()
+    if not good_update_number:
+        assert good_update_number, "there are not enough updates for the tests"
     highest_update_id = get_highest_updateId()
-    ask_user_for_updates()
-    enough_updates = enough_updates()
-    if not enough_updates:
-        assert enough_updates, "there are not enough updates for the tests"
+    ask_user_for_updates(offset=highest_update_id + 1)
+    good_update_number = enough_updates()
+    if not good_update_number:
+        assert good_update_number, "there are not enough updates for the tests"
     lowest_updateId = get_highest_updateId(maximum=False)
     assert lowest_updateId > highest_update_id, "The offset param is not working"
