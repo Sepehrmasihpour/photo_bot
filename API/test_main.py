@@ -22,6 +22,12 @@ client = TestClient(app)
 
 
 def media_test_results():
+    """
+    Executes media test cases and collects the responses.
+
+    Returns:
+        list: A list of responses from the API for each test case.
+    """
     # Load test cases and initialize result storage
     test_cases = media_test_cases
     results = []
@@ -32,28 +38,34 @@ def media_test_results():
         params = {"caption": case["caption"]}
         data = {}
         files = {}
+
         # If media is a string, prepare params payload and make POST request
-        if type(case["media"]) == str:
+        if isinstance(case["media"], str):
             data["media"] = case["media"]
             response = client.post(
                 f"/sendMessage/{case['chat_id']}/{case['media_type']}",
                 params=params,
                 data=data,
             )
-            results.append(response)
         else:
-            # If media is not a string, prepare files payload for multipart/form-
+            # If media is not a string, prepare files payload for multipart/form-data
             files["media"] = case["media"]
             response = client.post(
                 f"/sendMessage/{case['chat_id']}/{case['media_type']}",
                 params=params,
                 files=files,
             )
-            results.append(response)
+        results.append(response)
     return results
 
 
 def expected_media_test_results():
+    """
+    Prepares the expected results based on the test cases.
+
+    Returns:
+        list: A list of expected results for each test case.
+    """
     # Prepare expected results based on test cases
     test_cases = media_test_cases
     expected_results = []
@@ -72,7 +84,7 @@ def expected_media_test_results():
             expected_result["result"]["caption"] = case["caption"]
 
         # Check for specific chat IDs and adjust accordingly
-        if case["chat_id"] != "mainGroup" or "mainchannel":
+        if case["chat_id"] != "mainGroup" and case["chat_id"] != "mainchannel":
             expected_result["result"]["chat"]["id"] = case["chat_id"]
         else:
             if case["chat_id"] == "mainGroup":
@@ -89,17 +101,27 @@ media_expected_results = expected_media_test_results()
 
 
 def test_send_media_status():
-    # Test to ensure each response status code is 200
+    """
+    Test to ensure each response status code is 200.
+
+    Asserts:
+        Each response from the media tests returns a status code of 200.
+    """
     test_results = media_results
     for response in test_results:
         response_json = response.json
         assert (
             response.status_code == 200
-        ), f"status_code is not 200\nrespnse:{response_json}"
+        ), f"Status code is not 200\nResponse: {response_json}"
 
 
 def test_send_media_chat_id():
-    # Test to ensure response chat ID matches expected chat ID
+    """
+    Test to ensure response chat ID matches expected chat ID.
+
+    Asserts:
+        Each response chat ID matches the expected chat ID.
+    """
     results = media_results
     expected_results = media_expected_results
     for response, expected_response in zip(results, expected_results):
@@ -123,14 +145,20 @@ def test_send_media_chat_id():
         expected_chat_id = expected_chat_id_info.get("id")
         if expected_chat_id in uniqe_chat_ids:
             expected_chat_id = uniqe_chat_ids[expected_chat_id]
+
         # Assert condition
         assert (
             chat_id == expected_chat_id
-        ), f"The chat ID is not as expected.\nchat ID: {chat_id}\nexpected chat ID: {expected_chat_id}"
+        ), f"The chat ID is not as expected.\nChat ID: {chat_id}\nExpected chat ID: {expected_chat_id}"
 
 
 def test_send_media_caption():
-    # Test to ensure response caption matches expected caption
+    """
+    Test to ensure response caption matches expected caption.
+
+    Asserts:
+        Each response caption matches the expected caption.
+    """
     results = media_results
     expected_results = media_expected_results
     for response, expected_response in zip(results, expected_results):
@@ -144,7 +172,7 @@ def test_send_media_caption():
         caption = response_json.get("result", {}).get("caption", None)
 
         if expected_caption is not None:
-            assert caption is not None, f"The caption is missing."
+            assert caption is not None, "The caption is missing."
             assert (
                 caption == expected_caption
             ), f"The caption is not as expected.\nResponse caption: {caption}\nExpected caption: {expected_caption}"
@@ -158,6 +186,14 @@ def test_send_media_caption():
 def getUpdate_results(offset=None, selected_updates=None):
     """
     Retrieves updates from the Telegram API.
+
+    Args:
+        offset (int, optional): Identifier of the first update to be returned. Pass offset to retrieve updates
+                                starting from a specific point in time.
+        selected_updates (list[str], optional): List of update types to retrieve. For example, ['message', 'edited_message'].
+
+    Returns:
+        dict: JSON response containing updates if successful, otherwise None.
     """
     try:
         params = {}
@@ -167,7 +203,7 @@ def getUpdate_results(offset=None, selected_updates=None):
             params["selected_updates"] = selected_updates
 
         response = client.get("/getUpdates", params=params)
-        response.raise_for_status()
+        response.raise_for_status()  # Ensure the request was successful
         return response.json()
     except Exception as e:
         print(f"Error fetching updates: {e}")
@@ -177,13 +213,26 @@ def getUpdate_results(offset=None, selected_updates=None):
 def getUpdate_status(getUpdate_results):
     """
     Checks if the getUpdate method receives a successful response.
+
+    Args:
+        getUpdate_results (dict): The result from getUpdate_results function.
+
+    Returns:
+        bool: True if the response is successful and contains "ok": True, otherwise False.
     """
     return getUpdate_results and getUpdate_results.get("ok", False)
 
 
 def recive_test_updates(offset=None, selected_updates=None):
     """
-    Sends 4 test messages of various media types to the test channel.
+    Sends 4 test messages of various media types to the test channel to generate updates for testing.
+
+    Args:
+        offset (int, optional): Identifier of the first update to be returned.
+        selected_updates (list[str], optional): List of update types to retrieve.
+
+    Returns:
+        dict: JSON response containing updates if successful, otherwise None.
     """
     test_param = True
     chat_id_param = telegram_ids["TEST_CHANNEL_ID"]
@@ -209,6 +258,13 @@ def recive_test_updates(offset=None, selected_updates=None):
 def get_highest_updateId(getUpdate_response, maximum=True):
     """
     Retrieves the highest or lowest update ID from the response.
+
+    Args:
+        getUpdate_response (dict): The result from getUpdate_results function.
+        maximum (bool, optional): If True, returns the highest update ID, otherwise the lowest. Defaults to True.
+
+    Returns:
+        int: The highest or lowest update ID, depending on the maximum parameter, or None if no updates are found.
     """
     update_result = getUpdate_response.get("result", [])
     if not update_result:
@@ -223,6 +279,9 @@ def get_highest_updateId(getUpdate_response, maximum=True):
 def test_getUpdate_status():
     """
     Test if getUpdate_status correctly identifies a successful response.
+
+    Asserts:
+        The getUpdate method successfully fetches updates and the response is valid.
     """
     response = getUpdate_results()
     assert response is not None, "Failed to fetch updates"
@@ -232,6 +291,12 @@ def test_getUpdate_status():
 def enough_updates(getUpdate_response):
     """
     Checks if there are enough updates for testing.
+
+    Args:
+        getUpdate_response (dict): The result from getUpdate_results function.
+
+    Returns:
+        bool: True if there are at least 4 updates, otherwise False.
     """
     updates_result = getUpdate_response.get("result", [])
     return len(updates_result) >= 4
@@ -240,6 +305,9 @@ def enough_updates(getUpdate_response):
 def test_getUpdates_offset():
     """
     Test if the offset parameter works correctly with the getUpdates method.
+
+    Asserts:
+        The offset parameter correctly handles the updates and the method fetches new updates properly.
     """
     response = getUpdate_results()
     assert response is not None, "Failed to fetch updates"
