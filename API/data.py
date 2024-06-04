@@ -16,9 +16,9 @@ telegram_ids = {
     # "GROUP_ID ": os.getenv("GROUP_ID"),
     # "BOT_TOKEN": os.getenv("BOT_TOKEN"),
     # "BOT_CHAT_ID": os.getenv("BOT_CHAT_ID")
-    "TEST_USER_BOT_TOKEN": os.getenv(
-        "TEST_USER_BOT_TOKEN"
-    ),  #! This is a bot that we will use to substitude for a user in regards to tests.
+    #! the below id's are for testing the API in deployment they should not be deleted in any circumstance
+    "TEST_USER_BOT_TOKEN": os.getenv("TEST_USER_BOT_TOKEN"),
+    "TEST_CHANNEL_ID": os.getenv("TEST_CHANNEL_ID"),
 }
 
 uniqe_chat_ids = {

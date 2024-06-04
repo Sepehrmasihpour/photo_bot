@@ -154,19 +154,10 @@ def test_send_media_caption():
 
 #! -------------------------------------------------------getUpdate-----------------------------------------------
 
-# *The below section is for the getUpdates method.
 
-
-# the data needed for the getUpdates tests
-def getUpdate_results(
-    offset: int | None = None, selected_updates: list[str] | None = None
-):
+def getUpdate_results(offset=None, selected_updates=None):
     """
     Retrieves updates from the Telegram API.
-
-    Returns:
-        dict: JSON response containing updates.
-            Returns None if there's an error fetching updates.
     """
     try:
         params = {}
@@ -176,40 +167,26 @@ def getUpdate_results(
             params["selected_updates"] = selected_updates
 
         response = client.get("/getUpdates", params=params)
-        response.raise_for_status()  # Ensure the request was successful
+        response.raise_for_status()
         return response.json()
     except Exception as e:
         print(f"Error fetching updates: {e}")
         return None
 
 
-getUpdate_response_json = getUpdate_results()
-getUpdate_response_results = getUpdate_response_json["result"]
-
-
-def getUpdate_status():
+def getUpdate_status(getUpdate_results):
     """
-    sees if the getUpdate method recives an ok call back from the api or 200
+    Checks if the getUpdate method receives a successful response.
     """
-    response = getUpdate_response_json
-    if response and response["ok"] == True:
-        return True
-    return False
+    return getUpdate_results and getUpdate_results.get("ok", False)
 
 
-def recive_test_updates(
-    offset: int | None = None, selected_udpates: list[str] | None = None
-):
+def recive_test_updates(offset=None, selected_updates=None):
     """
-    This funciton will send 4 messages of various media types to the test group that the bot can recive updates.
-    This funcitn should be used where there are not enough updates to do tests on.
-    It uses the send_medi_via_bot function in the bot_actions file.
+    Sends 4 test messages of various media types to the test channel.
     """
-    global getUpdate_response_json
-    global getUpdate_response_results
-
     test_param = True
-    chat_id_param = telegram_ids["BOT_CHAT_ID"]
+    chat_id_param = telegram_ids["TEST_CHANNEL_ID"]
     media_type_params = ["text", "photo", "audio", "text"]
     media_params = [
         "test_user text message",
@@ -226,70 +203,63 @@ def recive_test_updates(
             chat_id=chat_id_param,
             test=test_param,
         )
-    getUpdate_response_json = getUpdate_results(
-        offset=offset, selected_updates=selected_udpates
-    )
-    getUpdate_response_results = getUpdate_response_json["result"]
+    return getUpdate_results(offset=offset, selected_updates=selected_updates)
 
 
-def get_highest_updateId(maximum: bool = True):
-    update_result = getUpdate_response_results
-    highest_updateId = (
+def get_highest_updateId(getUpdate_response, maximum=True):
+    """
+    Retrieves the highest or lowest update ID from the response.
+    """
+    update_result = getUpdate_response.get("result", [])
+    if not update_result:
+        return None
+    return (
         max(update["update_id"] for update in update_result)
         if maximum
         else min(update["update_id"] for update in update_result)
     )
-    return highest_updateId
 
 
 def test_getUpdate_status():
-    status = getUpdate_status()
-    assert (
-        status
-    ), f"getUpdate method has a failed called,\ngetUpdate method response : {getUpdate_response_json}"
+    """
+    Test if getUpdate_status correctly identifies a successful response.
+    """
+    response = getUpdate_results()
+    assert response is not None, "Failed to fetch updates"
+    assert getUpdate_status(response), "getUpdate method failed."
 
 
-def enough_updates():
-    updates_result = getUpdate_response_results
-    update_result_numbers = len(updates_result)
-    if not updates_result:
-        return False
-    if update_result_numbers < 4:
-        return False
-    return True
-
-
-def ask_user_for_updates(
-    offset: int | None = None, selected_updates: list[str] | None = None
-):
-    global getUpdate_response_json
-    global getUpdate_response_results
-    print(
-        "please send atleast 4 messages of any kind to the bot\n I will wait for 30 seconds for you, if you don't do this we will set the test as a faillure"
-    )
-    time.sleep(20)
-    getUpdate_response_json = getUpdate_results(
-        offset=offset, selected_updates=selected_updates
-    )
-    getUpdate_response_results = getUpdate_response_json["result"]
+def enough_updates(getUpdate_response):
+    """
+    Checks if there are enough updates for testing.
+    """
+    updates_result = getUpdate_response.get("result", [])
+    return len(updates_result) >= 4
 
 
 def test_getUpdates_offset():
-    status = getUpdate_status()
-    if not status:
-        assert (
-            status
-        ), "because of the not ok status of the method This test cannot be excuted"
-    good_update_number = enough_updates()
-    if not good_update_number:
-        ask_user_for_updates()
-    good_update_number = enough_updates()
-    if not good_update_number:
-        assert good_update_number, "there are not enough updates for the tests"
-    highest_update_id = get_highest_updateId()
-    ask_user_for_updates(offset=highest_update_id + 1)
-    good_update_number = enough_updates()
-    if not good_update_number:
-        assert good_update_number, "there are not enough updates for the tests"
-    lowest_updateId = get_highest_updateId(maximum=False)
-    assert lowest_updateId > highest_update_id, "The offset param is not working"
+    """
+    Test if the offset parameter works correctly with the getUpdates method.
+    """
+    response = getUpdate_results()
+    assert response is not None, "Failed to fetch updates"
+    assert getUpdate_status(
+        response
+    ), "getUpdate method did not return a successful response."
+
+    if not enough_updates(response):
+        response = recive_test_updates()
+
+    highest_update_id = get_highest_updateId(response)
+    assert highest_update_id is not None, "No updates found"
+
+    recive_test_updates(offset=highest_update_id + 1)
+    new_response = getUpdate_results()
+    assert new_response is not None, "Failed to fetch new updates"
+
+    lowest_updateId = get_highest_updateId(new_response, maximum=False)
+    assert lowest_updateId is not None, "No new updates found"
+    assert lowest_updateId > highest_update_id, "The offset parameter is not working."
+
+
+# *The below will be for testing the selected_updates param of the getUpdates method
