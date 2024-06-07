@@ -1,6 +1,4 @@
 # Import necessary modules and test params
-#! This import dosent work inside the tests/endpoints directory find out why and fix it\
-import time
 from fastapi.testclient import TestClient
 from main import app
 from bot_actions import send_media_via_bot
