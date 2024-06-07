@@ -1,13 +1,7 @@
 [tool.poetry]
-<<<<<<<< HEAD:API/pyproject.toml
 name = "seshat_api"
 version = "0.1.0"
 description = "This is the api for seshat requests"
-========
-name = "seshat_bot"
-version = "0.1.0"
-description = "This bot will handle the telegram side of seshat dealings.'"
->>>>>>>> group_manager:bot/pyproject.toml
 authors = ["Sepehrmasihpour <sepehr.masihpour1381@gmail.com>"]
 license = "Proprietary"
 package-mode = false
@@ -15,16 +9,12 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.12"
 python-dotenv = "^1.0.1"
-<<<<<<<< HEAD:API/pyproject.toml
 fastapi = "^0.110.0"
 uvicorn = {extras = ["standard"], version = "^0.28.0"}
 requests = "^2.31.0"
 python-multipart = "^0.0.9"
 httpx = "^0.27.0"
 pytest = "^8.1.1"
-========
-python-telegram-bot = "^21.0.1"
->>>>>>>> group_manager:bot/pyproject.toml
 
 
 [build-system]
