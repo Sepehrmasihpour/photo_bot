@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "seshat_api"
+version = "0.1.0"
+description = "This is the api for seshat requests"
+authors = ["Sepehrmasihpour <sepehr.masihpour1381@gmail.com>"]
+license = "Proprietary"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+python-dotenv = "^1.0.1"
+fastapi = "^0.110.0"
+uvicorn = {extras = ["standard"], version = "^0.28.0"}
+requests = "^2.31.0"
+python-multipart = "^0.0.9"
+httpx = "^0.27.0"
+pytest = "^8.1.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
