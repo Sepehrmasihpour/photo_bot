@@ -8,6 +8,9 @@ cursur.execute(
     """
 CREATE TABLE IF NOT EXISTS group_members (
     chat_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_name TEXT NOT NULL,
+    name TEXT NOT NULL,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 )
                """
 )
