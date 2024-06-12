@@ -3,3 +3,4 @@
 .*cache
 *cache
 __pycache__
+*.db
