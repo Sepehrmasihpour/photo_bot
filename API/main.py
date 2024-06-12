@@ -151,7 +151,7 @@ async def getUpdates(allowed_updates: list[str] = [], offset: int = 0):
     return result
 
 
-@app.post("/updateGroupMembers")
+@app.post("/updateGroupMembers")  #! make some test for this
 async def update_group_members(chat_id: int, name: str, user_name: str):
     """
     Endpoint to update the `group_members` table in the database.
