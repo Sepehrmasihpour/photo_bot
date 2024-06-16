@@ -4,6 +4,12 @@ from bot_actions import *  # Importing necessary functions for bot actions.
 from data import telegram_ids, uniqe_chat_ids
 from datetime import datetime, timedelta
 
+# Import the create_database function from create_db
+from create_db import create_database
+
+# Call the function to ensure the database exists
+create_database()
+
 app = FastAPI()  # Initialize FastAPI app for creating RESTful APIs easily.
 
 # Retrieve various chat and group IDs from environment variables for flexibility and security.
@@ -176,28 +182,18 @@ async def update_group_members(chat_id: int, name: str, user_name: str):
         result = cursur.fetchone()
 
         if result:
-            last_updated = datetime.strptime(
-                result["last_updated"], "%Y-%m-%d %H:%M:%S"
-            )
-            current_time = datetime.now()
 
-            # Check if the last update was more than 5 hours ago
-            if current_time - last_updated > timedelta(hours=5):
-                # Update the record with new user_name and name
-                cursur.execute(
-                    """
-                    UPDATE group_members
-                    SET user_name = ?, name = ?, last_updated = CURRENT_TIMESTAMP
-                    WHERE chat_id = ?
-                    """,
-                    (user_name, name, chat_id),
-                )
-                conn.commit()
-                return {"message": "Group member updated successfully"}
-            else:
-                return {
-                    "message": "Update not required, last update was less than 5 hours ago"
-                }
+            # Update the record with new user_name and name
+            cursur.execute(
+                """
+                UPDATE group_members
+                SET user_name = ?, name = ?, last_updated = CURRENT_TIMESTAMP
+                WHERE chat_id = ?
+                """,
+                (user_name, name, chat_id),
+            )
+            conn.commit()
+            return {"message": "Group member updated successfully"}
         else:
             # If not exists, insert new record
             cursur.execute(
