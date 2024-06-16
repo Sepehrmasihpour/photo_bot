@@ -162,8 +162,8 @@ async def update_group_members(chat_id: int, name: str, user_name: str):
     """
     Endpoint to update the `group_members` table in the database.
 
-    Checks if a record with the given `chat_id` exists. If it does and the last update was more than 5 hours ago,
-    it updates the record. Otherwise, it inserts a new record.
+    Checks if a record with the given `chat_id` exists. If it does, it updates the record only if the `name` or `user_name` has changed.
+    Otherwise, it inserts a new record.
 
     Parameters:
     - chat_id: The chat ID of the group member.
@@ -175,19 +175,28 @@ async def update_group_members(chat_id: int, name: str, user_name: str):
     """
     conn = get_db_connection()
     try:
-        cursur = conn.cursor()
+        cursor = conn.cursor()
 
         # Check if the chat_id exists
-        cursur.execute("SELECT * FROM group_members WHERE chat_id = ?", (chat_id,))
-        result = cursur.fetchone()
+        cursor.execute(
+            "SELECT name, user_name FROM group_members WHERE chat_id = ?", (chat_id,)
+        )
+        result = cursor.fetchone()
 
         if result:
+            current_name, current_user_name = result
+
+            # Check if the name or user_name has changed
+            if current_name == name and current_user_name == user_name:
+                return {
+                    "message": "No update required as the name and username are unchanged"
+                }
 
             # Update the record with new user_name and name
-            cursur.execute(
+            cursor.execute(
                 """
                 UPDATE group_members
-                SET user_name = ?, name = ?, last_updated = CURRENT_TIMESTAMP
+                SET user_name = ?, name = ?
                 WHERE chat_id = ?
                 """,
                 (user_name, name, chat_id),
@@ -196,7 +205,7 @@ async def update_group_members(chat_id: int, name: str, user_name: str):
             return {"message": "Group member updated successfully"}
         else:
             # If not exists, insert new record
-            cursur.execute(
+            cursor.execute(
                 """
                 INSERT INTO group_members (chat_id, user_name, name)
                 VALUES (?, ?, ?)
