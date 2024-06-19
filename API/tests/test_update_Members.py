@@ -3,6 +3,17 @@ from fastapi.testclient import TestClient
 
 
 def test_update_group_members_add_new_member(client, db_connection):
+    """
+    Test case to verify adding a new group member.
+
+    Steps:
+    1. Delete any existing member with chat_id = 1 to ensure a clean state.
+    2. Send a POST request to add a new member with chat_id = 1.
+    3. Assert that the response status code is 200.
+    4. Assert that the response JSON indicates the member was added successfully.
+    5. Query the database to check that the new member was correctly inserted.
+    6. Assert that the queried member matches the expected name and username.
+    """
     cursor = db_connection.cursor()
     cursor.execute("DELETE FROM group_members WHERE chat_id = ?", (1,))
     db_connection.commit()
@@ -22,6 +33,19 @@ def test_update_group_members_add_new_member(client, db_connection):
 
 
 def test_update_group_members_update_existing_member(client, db_connection):
+    """
+    Test case to verify updating an existing group member.
+
+    Steps:
+    1. Delete any existing member with chat_id = 2 to ensure a clean state.
+    2. Insert a new member with chat_id = 2, user_name = 'janedoe', and name = 'Jane Doe'.
+    3. Commit the new member to the database.
+    4. Send a POST request to update the member's name and username.
+    5. Assert that the response status code is 200.
+    6. Assert that the response JSON indicates the member was updated successfully.
+    7. Query the database to check that the member's details were correctly updated.
+    8. Assert that the queried member matches the new name and username.
+    """
     cursor = db_connection.cursor()
     cursor.execute("DELETE FROM group_members WHERE chat_id = ?", (2,))
     db_connection.commit()
@@ -47,6 +71,19 @@ def test_update_group_members_update_existing_member(client, db_connection):
 
 
 def test_update_group_members_no_update_required(client, db_connection):
+    """
+    Test case to verify that no update occurs when the name and username are unchanged.
+
+    Steps:
+    1. Delete any existing member with chat_id = 3 to ensure a clean state.
+    2. Insert a new member with chat_id = 3, user_name = 'janedoe', and name = 'Jane Doe'.
+    3. Commit the new member to the database.
+    4. Send a POST request with the same name and username to check no update is needed.
+    5. Assert that the response status code is 200.
+    6. Assert that the response JSON indicates no update was required.
+    7. Query the database to check that the member's details remain unchanged.
+    8. Assert that the queried member matches the original name and username.
+    """
     cursor = db_connection.cursor()
     cursor.execute("DELETE FROM group_members WHERE chat_id = ?", (3,))
     db_connection.commit()

@@ -167,20 +167,45 @@ async def getUpdates(allowed_updates: list[str] = [], offset: int = 0):
 
 @app.post("/updateGroupMembers")
 async def update_group_members(payload: GroupMemberUpdate):
-    conn = get_db_connection()
+    """
+    Endpoint to update the 'group_members' table in the database.
+
+    This endpoint performs the following operations:
+    1. Connects to the database.
+    2. Checks if a record with the given 'chat_id' exists in the 'group_members' table.
+       - If it exists and the 'name' and 'user_name' are unchanged, it returns a message indicating no update is required.
+       - If it exists and either the 'name' or 'user_name' has changed, it updates the record with the new values.
+       - If it does not exist, it inserts a new record with the provided 'chat_id', 'name', and 'user_name'.
+    3. Commits the transaction to the database.
+    4. Returns a success message indicating whether a member was added or updated.
+    5. Handles any exceptions by raising an HTTP 500 error with the exception details.
+    6. Ensures the database connection is closed.
+
+    Parameters:
+    - payload: A Pydantic model 'GroupMemberUpdate' containing:
+      - chat_id: The chat ID of the group member (integer).
+      - name: The name of the group member (string).
+      - user_name: The username of the group member (string).
+
+    Returns:
+    - JSON response with a message indicating the outcome of the operation.
+    """
+    conn = get_db_connection()  # Connect to the database
     try:
-        cursor = conn.cursor()
+        cursor = conn.cursor()  # Create a cursor object to execute SQL commands
         cursor.execute(
             "SELECT name, user_name FROM group_members WHERE chat_id = ?",
             (payload.chat_id,),
-        )
-        result = cursor.fetchone()
+        )  # Check if a record with the given 'chat_id' exists
+        result = cursor.fetchone()  # Fetch the result of the query
         if result:
-            current_name, current_user_name = result
+            current_name, current_user_name = result  # Unpack the result
             if current_name == payload.name and current_user_name == payload.user_name:
+                # Return a message if no update is required
                 return {
                     "message": "No update required as the name and username are unchanged"
                 }
+            # Update the record if the 'name' or 'user_name' has changed
             cursor.execute(
                 """
                 UPDATE group_members
@@ -189,9 +214,10 @@ async def update_group_members(payload: GroupMemberUpdate):
                 """,
                 (payload.user_name, payload.name, payload.chat_id),
             )
-            conn.commit()
+            conn.commit()  # Commit the changes to the database
             return {"message": "Group member updated successfully"}
         else:
+            # Insert a new record if it does not exist
             cursor.execute(
                 """
                 INSERT INTO group_members (chat_id, user_name, name)
@@ -199,9 +225,10 @@ async def update_group_members(payload: GroupMemberUpdate):
                 """,
                 (payload.chat_id, payload.user_name, payload.name),
             )
-            conn.commit()
+            conn.commit()  # Commit the new record to the database
             return {"message": "Group member added successfully"}
     except Exception as e:
+        # Raise an HTTP 500 error with the exception details in case of an error
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        conn.close()
+        conn.close()  # Ensure the database connection is closed
