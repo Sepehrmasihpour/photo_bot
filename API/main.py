@@ -1,14 +1,12 @@
 import sqlite3
 from fastapi import FastAPI, HTTPException, UploadFile
+from pydantic import BaseModel
 from bot_actions import *  # Importing necessary functions for bot actions.
 from data import telegram_ids, uniqe_chat_ids
 from datetime import datetime, timedelta
 
 # Import the create_database function from create_db
 from create_db import create_database
-
-# Call the function to ensure the database exists
-create_database()
 
 app = FastAPI()  # Initialize FastAPI app for creating RESTful APIs easily.
 
@@ -17,12 +15,22 @@ CHANNEL_ID = telegram_ids["CHANNEL_ID"]
 GROUP_ID = telegram_ids["GROUP_ID"]
 
 
+class GroupMemberUpdate(
+    BaseModel
+):  # * This is for the update_group_members function type safety
+    chat_id: int
+    name: str
+    user_name: str
+
+
 def get_db_connection():
     """
     Establishes and returns a connection to the 'seshat_manager.db' SQLite database.
 
     The row_factory attribute is set to sqlite3.Row to allow dictionary-style access to row data.
     """
+    # Call the function to ensure the database exists
+    create_database()
     conn = sqlite3.connect("seshat_manager.db")
     conn.row_factory = sqlite3.Row
     return conn
@@ -157,60 +165,39 @@ async def getUpdates(allowed_updates: list[str] = [], offset: int = 0):
     return result
 
 
-@app.post("/updateGroupMembers")  #! make some test for this
-async def update_group_members(chat_id: int, name: str, user_name: str):
-    """
-    Endpoint to update the `group_members` table in the database.
-
-    Checks if a record with the given `chat_id` exists. If it does, it updates the record only if the `name` or `user_name` has changed.
-    Otherwise, it inserts a new record.
-
-    Parameters:
-    - chat_id: The chat ID of the group member.
-    - name: The name of the group member.
-    - user_name: The username of the group member.
-
-    Returns:
-    - A success message or an appropriate message if no update is required.
-    """
+@app.post("/updateGroupMembers")
+async def update_group_members(payload: GroupMemberUpdate):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-
-        # Check if the chat_id exists
         cursor.execute(
-            "SELECT name, user_name FROM group_members WHERE chat_id = ?", (chat_id,)
+            "SELECT name, user_name FROM group_members WHERE chat_id = ?",
+            (payload.chat_id,),
         )
         result = cursor.fetchone()
-
         if result:
             current_name, current_user_name = result
-
-            # Check if the name or user_name has changed
-            if current_name == name and current_user_name == user_name:
+            if current_name == payload.name and current_user_name == payload.user_name:
                 return {
                     "message": "No update required as the name and username are unchanged"
                 }
-
-            # Update the record with new user_name and name
             cursor.execute(
                 """
                 UPDATE group_members
                 SET user_name = ?, name = ?
                 WHERE chat_id = ?
                 """,
-                (user_name, name, chat_id),
+                (payload.user_name, payload.name, payload.chat_id),
             )
             conn.commit()
             return {"message": "Group member updated successfully"}
         else:
-            # If not exists, insert new record
             cursor.execute(
                 """
                 INSERT INTO group_members (chat_id, user_name, name)
                 VALUES (?, ?, ?)
                 """,
-                (chat_id, user_name, name),
+                (payload.chat_id, payload.user_name, payload.name),
             )
             conn.commit()
             return {"message": "Group member added successfully"}

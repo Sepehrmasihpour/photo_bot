@@ -3,31 +3,23 @@ import os
 
 
 def create_database():
-    """
-    Creates the SQLite database and initializes required tables if they don't already exist.
-    """
-    if not os.path.exists("seshat_manager.db"):
-        conn = sqlite3.connect("seshat_manager.db")
-        cursor = conn.cursor()
-
-        # Create your tables here
+    db_path = "seshat_manager.db"
+    table_name = "group_members"
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute(
+        f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'"
+    )
+    table_exists = cursor.fetchone()
+    if not table_exists:
         cursor.execute(
+            f"""
+            CREATE TABLE {table_name} (
+                chat_id INTEGER PRIMARY KEY,
+                user_name TEXT NOT NULL,
+                name TEXT NOT NULL
+            )
             """
-        CREATE TABLE group_members (
-            chat_id INTEGER PRIMARY KEY,
-            user_name TEXT NOT NULL,
-            name TEXT NOT NULL,
         )
-        """
-        )
-        # Add other table creation statements if needed
-
         conn.commit()
-        conn.close()
-        print("Database created successfully")
-    else:
-        print("Database already exists")
-
-
-if __name__ == "__main__":
-    create_database()
+    conn.close()
