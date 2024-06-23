@@ -1,9 +1,7 @@
 import sqlite3
 from fastapi import FastAPI, HTTPException, UploadFile
-from pydantic import BaseModel
 from bot_actions import *  # Importing necessary functions for bot actions.
-from data import telegram_ids, uniqe_chat_ids
-from datetime import datetime, timedelta
+from data import telegram_ids, uniqe_chat_ids, GroupMember
 
 # Import the create_database function from create_db
 from create_db import create_database
@@ -13,14 +11,6 @@ app = FastAPI()  # Initialize FastAPI app for creating RESTful APIs easily.
 # Retrieve various chat and group IDs from environment variables for flexibility and security.
 CHANNEL_ID = telegram_ids["CHANNEL_ID"]
 GROUP_ID = telegram_ids["GROUP_ID"]
-
-
-class GroupMemberUpdate(
-    BaseModel
-):  # * This is for the update_group_members function type safety
-    chat_id: int
-    name: str
-    user_name: str
 
 
 def get_db_connection():
@@ -166,7 +156,7 @@ async def getUpdates(allowed_updates: list[str] = [], offset: int = 0):
 
 
 @app.post("/updateGroupMembers")
-async def update_group_members(payload: GroupMemberUpdate):
+async def update_group_members(payload: GroupMember):
     """
     Endpoint to update the 'group_members' table in the database.
 
@@ -227,6 +217,56 @@ async def update_group_members(payload: GroupMemberUpdate):
             )
             conn.commit()  # Commit the new record to the database
             return {"message": "Group member added successfully"}
+    except Exception as e:
+        # Raise an HTTP 500 error with the exception details in case of an error
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()  # Ensure the database connection is closed
+
+
+@app.delete("/removeGroupMembers")
+async def remove_group_members(payload: GroupMember):
+    """
+    Endpoint to remove a member from the 'group_members' table in the database.
+
+    This endpoint performs the following operations:
+    1. Connects to the database.
+    2. Checks if a record with the given 'chat_id' and 'user_name' exists in the 'group_members' table.
+       - If it exists, deletes the record.
+       - If it does not exist, returns a message indicating no such member was found.
+    3. Commits the transaction to the database.
+    4. Returns a success message indicating the member was removed or an error message if not found.
+    5. Handles any exceptions by raising an HTTP 500 error with the exception details.
+    6. Ensures the database connection is closed.
+
+    Parameters:
+    - payload: A Pydantic model 'groupMemberRemove' containing:
+      - chat_id: The chat ID of the group member (integer).
+      - user_name: The username of the group member (string).
+      - name: The name of the group member (string, optional).
+
+    Returns:
+    - JSON response with a message indicating the outcome of the operation.
+    """
+    conn = get_db_connection()  # Connect to the database
+    try:
+        cursor = conn.cursor()  # Create a cursor object to execute SQL commands
+        cursor.execute(
+            "SELECT * FROM group_members WHERE chat_id = ? AND user_name = ?",
+            (payload.chat_id, payload.user_name),
+        )  # Check if a record with the given 'chat_id' and 'user_name' exists
+        result = cursor.fetchone()  # Fetch the result of the query
+        if result:
+            # Delete the record if it exists
+            cursor.execute(
+                "DELETE FROM group_members WHERE chat_id = ? AND user_name = ?",
+                (payload.chat_id, payload.user_name),
+            )
+            conn.commit()  # Commit the changes to the database
+            return {"message": "Group member removed successfully"}
+        else:
+            # Return a message if no such member was found
+            return {"message": "No such member found"}
     except Exception as e:
         # Raise an HTTP 500 error with the exception details in case of an error
         raise HTTPException(status_code=500, detail=str(e))

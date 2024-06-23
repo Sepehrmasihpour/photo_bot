@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 
 load_dotenv()  # ! Load environment variables for configuration purposes.
@@ -53,3 +54,11 @@ media_test_cases = [
         "caption": None,
     },
 ]
+
+
+class GroupMember(
+    BaseModel
+):  # * This is the data input type for when the api will want to do something with the group_members in the data base.
+    chat_id: int
+    name: str
+    user_name: str
