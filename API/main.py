@@ -272,3 +272,8 @@ async def remove_group_members(payload: GroupMember):
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()  # Ensure the database connection is closed
+
+
+#! make a function that will search throug the db using chat_id or name or user_name
+#! and integrate them into the update_group_member endpoint and the remove_group_member
+#! and make a new endpoint entirely for searching the db using the group_member
