@@ -1,8 +1,3 @@
-import pytest
-from fastapi.testclient import TestClient
-import json
-
-
 def test_remove_group_members_existing_member(client, db_connection):
     """
     Test case to verify removing an existing group member.
