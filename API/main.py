@@ -155,6 +155,14 @@ async def getUpdates(allowed_updates: list[str] = [], offset: int = 0):
     return result
 
 
+@app.post("/changGroupPhoto")
+async def change_group_photo(photo: str):
+    result = set_chat_photo(GROUP_ID, photo)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
 @app.post("/updateGroupMembers")
 async def update_group_members(payload: GroupMember):
     """

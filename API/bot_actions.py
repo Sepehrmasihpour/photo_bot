@@ -92,3 +92,10 @@ def telegram_getUpdates(allowed_updates: list = [], offset: int = 0):
     params = {"allowed_updates": allowed_updates, "offset": offset}
     response = telegram_api_request(request=request, params=params)
     return response
+
+
+def set_chat_photo(chat_id: str, file_id: str):
+    request = "setChatPhoto"
+    payload = {"chat_id": chat_id, "photo": file_id}
+    resppnse = telegram_api_request(method="POST", request=request, params=payload)
+    return resppnse
