@@ -155,14 +155,6 @@ async def getUpdates(allowed_updates: list[str] = [], offset: int = 0):
     return result
 
 
-@app.post("/changGroupPhoto")
-async def change_group_photo(photo: str):
-    result = set_chat_photo(GROUP_ID, photo)
-    if "error" in result:
-        raise HTTPException(status_code=400, detail=result["error"])
-    return result
-
-
 @app.post("/updateGroupMembers")
 async def update_group_members(payload: GroupMember):
     """
@@ -282,6 +274,15 @@ async def remove_group_members(payload: GroupMember):
         conn.close()  # Ensure the database connection is closed
 
 
-#! make a function that will search throug the db using chat_id or name or user_name
-#! and integrate them into the update_group_member endpoint and the remove_group_member
-#! and make a new endpoint entirely for searching the db using the group_member
+@app.post("/changGroupPhoto")
+async def change_group_photo(photo_id: str):
+    pass
+    # * The plan for this is to make a function at the bot_action module That will take a photo_id as the input and than
+    # * it will use the getFile method of the telegram api to get the file path of the photo and than send a request to
+    # * download the photo and upload its content to the db.
+    # * As got what will happen on this side in the endpoint the endpoint will take the a photo_id as the param and than it will send
+    # * that photo_id to the bot_actions download_photo function and than search through the db using the photo_id for the photo and than offering it as input to
+    # * another function that will be made in the bot actions that is called set_chat_photo which is basicly a wrapper for the telegram api method of setChatPhoto using using
+    # * photo input file as input and chat_id as param for theh function.
+    # * At last we will call another function that will be made in bot_action  module this is for deleting photos from the db and having a photo_id as param.
+    #! Don't forget error handling at all levels.

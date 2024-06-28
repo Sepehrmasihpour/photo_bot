@@ -94,6 +94,9 @@ def telegram_getUpdates(allowed_updates: list = [], offset: int = 0):
     return response
 
 
+# def dowload_photo(file_id:str):
+
+
 def set_chat_photo(chat_id: str, file_id: str):
     request = "setChatPhoto"
     payload = {"chat_id": chat_id, "photo": file_id}

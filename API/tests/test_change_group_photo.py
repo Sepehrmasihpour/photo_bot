@@ -15,7 +15,7 @@ def test_change_group_photo_success(client):
     with patch(
         "main.set_chat_photo", return_value={"result": "photo set successfully"}
     ):
-        response = client.post("/changGroupPhoto", json={"photo": "valid_photo_id"})
+        response = client.post("/changGroupPhoto", params={"photo": "valid_photo_id"})
         assert response.status_code == 200
         assert response.json() == {"result": "photo set successfully"}
 
@@ -31,7 +31,7 @@ def test_change_group_photo_error(client):
     4. Assert that the response JSON contains the expected error detail.
     """
     with patch("main.set_chat_photo", return_value={"error": "invalid photo id"}):
-        response = client.post("/changGroupPhoto", json={"photo": "invalid_photo_id"})
+        response = client.post("/changGroupPhoto", params={"photo": "invalid_photo_id"})
         assert response.status_code == 400
         assert response.json() == {"detail": "invalid photo id"}
 
@@ -47,6 +47,6 @@ def test_change_group_photo_exception(client):
     4. Assert that the response JSON contains the expected error message.
     """
     with patch("main.set_chat_photo", side_effect=Exception("Unexpected error")):
-        response = client.post("/changGroupPhoto", json={"photo": "photo_id"})
+        response = client.post("/changGroupPhoto", params={"photo": "photo_id"})
         assert response.status_code == 500
         assert response.json() == {"detail": "Internal Server Error"}
