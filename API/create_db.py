@@ -1,38 +1,23 @@
 import sqlite3
-import os
 
 
 def create_database():
     """
-    Creates the SQLite database and initializes the 'group_members' table if it does not already exist.
-
-    This function performs the following steps:
-    1. Defines the database file path and table name.
-    2. Connects to the SQLite database specified by 'db_path'. If the database file does not exist, it will be created.
-    3. Checks if the 'group_members' table already exists in the database.
-    4. If the table does not exist, it creates the table with columns:
-       - chat_id: INTEGER PRIMARY KEY
-       - user_name: TEXT NOT NULL
-       - name: TEXT NOT NULL
-    5. Commits the changes to the database.
-    6. Closes the database connection.
-
-    This function ensures that the required table structure is present in the database
-    before the application or tests attempt to use it.
+    Creates the SQLite database and initializes the 'group_members' and 'photos' tables if they do not already exist.
     """
     db_path = "seshat_manager.db"  # Path to the SQLite database file
-    table_name = "group_members"  # Name of the table to be created
     conn = sqlite3.connect(db_path)  # Connect to the SQLite database
     cursor = conn.cursor()  # Create a cursor object to execute SQL commands
+
+    # Check and create 'group_members' table if it does not exist
     cursor.execute(
-        f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'"
-    )  # Check if the table exists in the database
-    table_exists = cursor.fetchone()  # Fetch the result of the query
-    if not table_exists:
-        # If the table does not exist, create it with the specified columns
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='group_members'"
+    )
+    group_members_table_exists = cursor.fetchone()  # Fetch the result of the query
+    if not group_members_table_exists:
         cursor.execute(
-            f"""
-            CREATE TABLE {table_name} (
+            """
+            CREATE TABLE group_members (
                 chat_id INTEGER PRIMARY KEY,
                 user_name TEXT NOT NULL,
                 name TEXT NOT NULL
@@ -40,4 +25,25 @@ def create_database():
             """
         )
         conn.commit()  # Commit the changes to the database
+
+    # Check and create 'photos' table if it does not exist
+    cursor.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='photos'"
+    )
+    photos_table_exists = cursor.fetchone()  # Fetch the result of the query
+    if not photos_table_exists:
+        cursor.execute(
+            """
+            CREATE TABLE photos (
+                file_id TEXT PRIMARY KEY,
+                file_path TEXT NOT NULL
+            )
+            """
+        )
+        conn.commit()  # Commit the changes to the database
+
     conn.close()  # Close the database connection
+
+
+# Example usage
+create_database()

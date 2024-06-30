@@ -2,6 +2,7 @@ from typing import IO
 from data import telegram_ids
 import httpx
 from typing import Optional, Dict, Any
+import sqlite3
 
 
 # Extracting the BOT_TOKEN from the data module.
@@ -94,7 +95,31 @@ def telegram_getUpdates(allowed_updates: list = [], offset: int = 0):
     return response
 
 
-# def dowload_photo(file_id:str):
+def store_file_path(file_id: str):
+    # Step 1: get the file info from suing the telegram api.
+    file_info = telegram_api_request(
+        "getFile", method="GET", params={"file_id": file_id}
+    )
+
+    if file_info.get("ok"):
+        file_path = file_info["result"]["file_path"]
+
+        # Step 2: Construct the download URL
+        download_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+
+        # Step 3: Store file info in the database
+        db_path = "seshat_manager.db"  # Path to the SQLite database file
+        conn = sqlite3.connect(db_path)  # Connect to the SQLite database
+        cursor = conn.cursor()  # Create a cursor object to execute SQL commands
+
+        cursor.execute(
+            "INSERT OR REPLACE INTO photos (file_id, file_path) VALUES (?, ?)",
+            (file_id, file_path),
+        )
+        conn.commit()  # Commit the changes to the database
+        conn.close()  # Close the database connection
+    else:
+        print(f"Failed to get file info: {file_info.get('error')}")
 
 
 def set_chat_photo(chat_id: str, file_id: str):
