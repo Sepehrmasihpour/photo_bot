@@ -86,5 +86,6 @@ def setup_and_teardown_db():
     conn = sqlite3.connect("seshat_manager.db")
     cursor = conn.cursor()
     cursor.execute("DELETE FROM group_members")
+    cursor.execute("DELETE FROM photos")
     conn.commit()
     conn.close()

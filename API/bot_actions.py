@@ -122,8 +122,28 @@ def store_file_path(file_id: str):
         print(f"Failed to get file info: {file_info.get('error')}")
 
 
-def set_chat_photo(chat_id: str, file_id: str):
+def delete_file_path(file_id: str):
+    # Step 1: Define the path to the SQLite database
+    db_path = "seshat_manager.db"  # Path to the SQLite database file
+
+    # Step 2: Connect to the SQLite database
+    conn = sqlite3.connect(db_path)  # Connect to the SQLite database
+
+    # Step 3: Create a cursor object to execute SQL commands
+    cursor = conn.cursor()  # Create a cursor object to execute SQL commands
+
+    # Step 4: Execute the DELETE statement to remove the file information
+    cursor.execute("DELETE FROM photos WHERE file_id = ?", (file_id,))
+
+    # Step 5: Commit the changes to the database
+    conn.commit()  # Commit the changes to the database
+
+    # Step 6: Close the database connection
+    conn.close()  # Close the database connection
+
+
+def set_chat_photo(chat_id: str, file_path: str):
     request = "setChatPhoto"
-    payload = {"chat_id": chat_id, "photo": file_id}
+    payload = {"chat_id": chat_id, "photo": file_path}
     resppnse = telegram_api_request(method="POST", request=request, params=payload)
     return resppnse
