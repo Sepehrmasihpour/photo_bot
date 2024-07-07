@@ -1,10 +1,11 @@
 import pytest
 from unittest.mock import patch
+from data import telegram_ids
 from bot_actions import (
-    store_file_path,
-    delete_file_path,
+    store_photo_path,
+    delete_photo_path,
     set_chat_photo,
-)  # Adjust the import as necessary
+)
 
 
 # Mock function for telegram_api_request
@@ -23,10 +24,7 @@ def mock_telegram_api_request(
         else:
             return {"ok": False, "error": "Invalid file_id"}
     elif request == "setChatPhoto":
-        if (
-            params["chat_id"] == "valid_chat_id"
-            and params["photo"] == "valid_photo_path"
-        ):
+        if data["chat_id"] == "valid_chat_id" and data["photo"] == "valid_photo_path":
             return {"ok": True}
         else:
             return {"ok": False, "error": "Invalid chat_id or photo"}
@@ -39,12 +37,18 @@ def mock_telegram_api(mocker):
     )
 
 
-def test_store_file_path_success(mock_telegram_api, db_connection):
+def test_store_photo_path_success(mock_telegram_api, db_connection):
+    from bot_actions import (
+        BOT_TOKEN,
+    )  # Import the BOT_TOKEN to construct the expected file path
+
     file_id = "valid_file_id"
-    expected_file_path = "documents/file_1.txt"
+    expected_file_path = (
+        f"https://api.telegram.org/file/bot{BOT_TOKEN}/documents/file_1.txt"
+    )
 
     # Call the function
-    store_file_path(file_id)
+    store_photo_path(file_id)
 
     # Verify the database insert was called with correct values
     cursor = db_connection.cursor()
@@ -56,11 +60,11 @@ def test_store_file_path_success(mock_telegram_api, db_connection):
     assert result["file_path"] == expected_file_path
 
 
-def test_store_file_path_invalid_file_id(mock_telegram_api, db_connection, capsys):
+def test_store_photo_path_invalid_file_id(mock_telegram_api, db_connection, capsys):
     file_id = "invalid_file_id"
 
     # Call the function
-    store_file_path(file_id)
+    store_photo_path(file_id)
 
     # Verify no database insert was called
     cursor = db_connection.cursor()
@@ -75,9 +79,11 @@ def test_store_file_path_invalid_file_id(mock_telegram_api, db_connection, capsy
     assert "Failed to get file info: Invalid file_id" in captured.out
 
 
-def test_delete_file_path(mock_telegram_api, db_connection):
+def test_delete_photo_path(mock_telegram_api, db_connection):
+    BOT_TOKEN = telegram_ids["BOT_TOKEN"]
+
     file_id = "valid_file_id"
-    file_path = "documents/file_1.txt"
+    file_path = f"https://api.telegram.org/file/bot{BOT_TOKEN}/documents/file_1.txt"
 
     # Insert a file record to delete
     cursor = db_connection.cursor()
@@ -87,7 +93,7 @@ def test_delete_file_path(mock_telegram_api, db_connection):
     db_connection.commit()
 
     # Call the function
-    delete_file_path(file_id)
+    delete_photo_path(file_id)
 
     # Verify the database delete was called correctly
     cursor.execute(
@@ -99,10 +105,12 @@ def test_delete_file_path(mock_telegram_api, db_connection):
 
 def test_set_chat_photo_success(mock_telegram_api):
     chat_id = "valid_chat_id"
-    file_path = "valid_photo_path"
+    file_id = "valid_file_id"
 
-    # Call the function
-    response = set_chat_photo(chat_id, file_path)
+    # Mock the store_photo_path function to return a valid photo path
+    with patch("bot_actions.store_photo_path", return_value="valid_photo_path"):
+        # Call the function
+        response = set_chat_photo(chat_id, file_id)
 
     # Verify the response
     assert response["ok"] is True
@@ -110,11 +118,13 @@ def test_set_chat_photo_success(mock_telegram_api):
 
 def test_set_chat_photo_invalid(mock_telegram_api):
     chat_id = "invalid_chat_id"
-    file_path = "invalid_photo_path"
+    file_id = "invalid_file_id"
 
-    # Call the function
-    response = set_chat_photo(chat_id, file_path)
+    # Mock the store_photo_path function to return None for invalid file_id
+    with patch("bot_actions.store_photo_path", return_value=None):
+        # Call the function
+        response = set_chat_photo(chat_id, file_id)
 
     # Verify the response
     assert response["ok"] is False
-    assert response["error"] == "Invalid chat_id or photo"
+    assert response["error"] == "Failed to retrieve file info or store photo path"

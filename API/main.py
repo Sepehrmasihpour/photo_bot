@@ -32,22 +32,6 @@ async def send_media(
     media: UploadFile | str,
     caption: str | None,
 ):
-    """
-    Asynchronously sends different types of media to a specified chat using a bot.
-
-    Supports sending media like photos, audio, video, and text by calling the `send_media_via_bot` function.
-    Validates the media type and its MIME type before sending to ensure compatibility.
-
-    Parameters:
-    - media_type: Type of the media (photo, audio, video, text).
-    - chat_id: The chat ID where the media will be sent. Accepts both string and integer values.
-    - media: The media to be sent, can be a path (str) or an uploaded file (UploadFile).
-    - caption: Optional caption for the media.
-
-    Returns:
-    - A dictionary with a success message and result on success, or raises HTTPException on failure.
-    """
-
     input_media_type = media_type.lower()
     media_types = {
         "photo": {"acceptable_mime_types": ["image/jpeg", "image/png", "image/gif"]},
@@ -90,7 +74,7 @@ async def send_media(
             return result
 
     else:
-        return {"error": "wrong media type, input"}
+        raise HTTPException(status_code=400, detail="wrong media type, input")
 
 
 def uniqe_id_identifier(chat_id: str | int):
@@ -141,45 +125,17 @@ async def sendMessage(
 
 @app.get("/getUpdates")
 async def getUpdates(allowed_updates: list[str] = [], offset: int = 0):
-    """
-    Endpoint to get updates from the bot.
-
-    Parameters:
-    - allowed_updates: List of allowed update types to be retrieved.
-    - offset: Offset for retrieving updates.
-
-    Returns:
-    - The result from `telegram_getUpdates` function.
-    """
-    result = telegram_getUpdates(allowed_updates=allowed_updates, offset=offset)
-    return result
+    try:
+        result = telegram_getUpdates(allowed_updates=allowed_updates, offset=offset)
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/updateGroupMembers")
 async def update_group_members(payload: GroupMember):
-    """
-    Endpoint to update the 'group_members' table in the database.
-
-    This endpoint performs the following operations:
-    1. Connects to the database.
-    2. Checks if a record with the given 'chat_id' exists in the 'group_members' table.
-       - If it exists and the 'name' and 'user_name' are unchanged, it returns a message indicating no update is required.
-       - If it exists and either the 'name' or 'user_name' has changed, it updates the record with the new values.
-       - If it does not exist, it inserts a new record with the provided 'chat_id', 'name', and 'user_name'.
-    3. Commits the transaction to the database.
-    4. Returns a success message indicating whether a member was added or updated.
-    5. Handles any exceptions by raising an HTTP 500 error with the exception details.
-    6. Ensures the database connection is closed.
-
-    Parameters:
-    - payload: A Pydantic model 'GroupMemberUpdate' containing:
-      - chat_id: The chat ID of the group member (integer).
-      - name: The name of the group member (string).
-      - user_name: The username of the group member (string).
-
-    Returns:
-    - JSON response with a message indicating the outcome of the operation.
-    """
     conn = get_db_connection()  # Connect to the database
     try:
         cursor = conn.cursor()  # Create a cursor object to execute SQL commands
@@ -226,28 +182,6 @@ async def update_group_members(payload: GroupMember):
 
 @app.delete("/removeGroupMembers")
 async def remove_group_members(payload: GroupMember):
-    """
-    Endpoint to remove a member from the 'group_members' table in the database.
-
-    This endpoint performs the following operations:
-    1. Connects to the database.
-    2. Checks if a record with the given 'chat_id' and 'user_name' exists in the 'group_members' table.
-       - If it exists, deletes the record.
-       - If it does not exist, returns a message indicating no such member was found.
-    3. Commits the transaction to the database.
-    4. Returns a success message indicating the member was removed or an error message if not found.
-    5. Handles any exceptions by raising an HTTP 500 error with the exception details.
-    6. Ensures the database connection is closed.
-
-    Parameters:
-    - payload: A Pydantic model 'groupMemberRemove' containing:
-      - chat_id: The chat ID of the group member (integer).
-      - user_name: The username of the group member (string).
-      - name: The name of the group member (string, optional).
-
-    Returns:
-    - JSON response with a message indicating the outcome of the operation.
-    """
     conn = get_db_connection()  # Connect to the database
     try:
         cursor = conn.cursor()  # Create a cursor object to execute SQL commands
@@ -275,14 +209,11 @@ async def remove_group_members(payload: GroupMember):
 
 
 @app.post("/changGroupPhoto")
-async def change_group_photo(photo_id: str):
-    pass
-    # * The plan for this is to make a function at the bot_action module That will take a photo_id as the input and than
-    # * it will use the getFile method of the telegram api to get the file path of the photo and than send a request to
-    # * download the photo and upload its content to the db.
-    # * As got what will happen on this side in the endpoint the endpoint will take the a photo_id as the param and than it will send
-    # * that photo_id to the bot_actions download_photo function and than search through the db using the photo_id for the photo and than offering it as input to
-    # * another function that will be made in the bot actions that is called set_chat_photo which is basicly a wrapper for the telegram api method of setChatPhoto using using
-    # * photo input file as input and chat_id as param for theh function.
-    # * At last we will call another function that will be made in bot_action  module this is for deleting photos from the db and having a photo_id as param.
-    #! Don't forget error handling at all levels.
+async def change_group_photo(file_id: str):
+    try:
+        result = set_chat_photo(file_id=file_id, chat_id=GROUP_ID)
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
