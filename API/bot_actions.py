@@ -3,6 +3,7 @@ from data import telegram_ids
 import httpx
 from typing import Optional, Dict, Any
 import sqlite3
+import requests
 
 
 # Extracting the BOT_TOKEN from the data module.
@@ -198,19 +199,33 @@ def set_chat_photo(chat_id: str, file_id: str):
                 "error": "Failed to retrieve file info or store photo path",
             }
 
-        # Step 2: Prepare the payload for setting the chat photo
+        # Step 2: Download the photo
+        response = requests.get(file_path)
+        if response.status_code != 200:
+            return {
+                "ok": False,
+                "error": f"Failed to download the file: {response.status_code}",
+            }
+
+        # Step 3: Prepare the payload for setting the chat photo
         request = "setChatPhoto"
-        payload = {"chat_id": chat_id, "photo": file_path}
+        payload = {"chat_id": chat_id}
+        files = {"photo": ("photo.jpg", response.content)}
 
-        # Step 3: Make the API request to set the chat photo
-        response = telegram_api_request(request=request, method="POST", data=payload)
+        # Step 4: Make the API request to set the chat photo
+        api_response = telegram_api_request(
+            request=request, method="POST", data=payload, files=files
+        )
 
-        if response.get("ok"):
+        if api_response.get("ok"):
             delete_photo_path(file_id=file_id)
-            return response  # Return the successful response
+            return api_response  # Return the successful response
         else:
-            print(f"Failed to set chat photo: {response.get('error')}")
-            return {"ok": False, "error": response.get("error")}
+            error_message = api_response.get("description", "Unknown error")
+            if "PHOTO_CROP_SIZE_SMALL" in error_message:
+                error_message = "The photo size is not within the acceptable limits (160x160 to 2048x2048 pixels)."
+            print(f"Failed to set chat photo: {error_message}")
+            return {"ok": False, "error": error_message}
 
     except Exception as e:
         print(f"An error occurred while setting the chat photo: {e}")
