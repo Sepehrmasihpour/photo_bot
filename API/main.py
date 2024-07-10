@@ -208,7 +208,9 @@ async def remove_group_members(payload: GroupMember):
         conn.close()  # Ensure the database connection is closed
 
 
-@app.post("/changGroupPhoto")
+@app.post(
+    "/changGroupPhoto"
+)  #! The tests for this enpoitn are flawed and don't repesent the actual end-point fix at the earliest
 async def change_group_photo(file_id: str):
     try:
         result = set_chat_photo(file_id=file_id, chat_id=GROUP_ID)
