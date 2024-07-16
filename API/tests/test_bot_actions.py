@@ -1,12 +1,7 @@
 import pytest
 from unittest.mock import patch, Mock
 from data import telegram_ids
-from bot_actions import (
-    store_photo_path,
-    delete_photo_path,
-    set_chat_photo,
-    post_poll,
-)
+from bot_actions import *
 
 
 # Mock function for telegram_api_request
@@ -31,6 +26,23 @@ def mock_telegram_api_request(
             return {"ok": True, "result": {"poll_id": "12345"}}
         else:
             return {"ok": False, "error": "Invalid poll data"}
+    elif request == "getPollResults":
+        return {
+            "ok": True,
+            "result": {
+                "id": "poll_id",
+                "question": "Sample Question",
+                "options": [
+                    {"text": "Option 1", "voter_count": 10},
+                    {"text": "Option 2", "voter_count": 20},
+                ],
+            },
+        }
+    elif request == "stopPoll":
+        return {
+            "ok": True,
+            "result": {"poll_id": params["message_id"], "is_closed": True},
+        }
 
 
 @pytest.fixture
@@ -175,6 +187,51 @@ def test_post_poll_network_error(mock_telegram_api):
         is_anonymous = True
 
         response = post_poll(question, options, is_anonymous)
+
+        assert response["ok"] is False
+        assert response["error"] == "Network error"
+
+
+def test_get_poll_results_success(mock_telegram_api):
+    message_id = "valid_message_id"
+
+    response = get_poll_results(message_id)
+
+    assert response["ok"] is True
+    assert "result" in response
+    assert response["result"]["id"] == "poll_id"
+    assert len(response["result"]["options"]) == 2
+
+
+def test_get_poll_results_network_error(mock_telegram_api):
+    with patch(
+        "bot_actions.telegram_api_request", side_effect=Exception("Network error")
+    ):
+        message_id = "valid_message_id"
+
+        response = get_poll_results(message_id)
+
+        assert response["ok"] is False
+        assert response["error"] == "Network error"
+
+
+def test_stop_poll_success(mock_telegram_api):
+    message_id = "valid_message_id"
+
+    response = stop_poll(message_id)
+
+    assert response["ok"] is True
+    assert response["result"]["poll_id"] == message_id
+    assert response["result"]["is_closed"] is True
+
+
+def test_stop_poll_network_error(mock_telegram_api):
+    with patch(
+        "bot_actions.telegram_api_request", side_effect=Exception("Network error")
+    ):
+        message_id = "valid_message_id"
+
+        response = stop_poll(message_id)
 
         assert response["ok"] is False
         assert response["error"] == "Network error"

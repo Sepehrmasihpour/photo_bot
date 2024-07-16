@@ -246,3 +246,24 @@ def post_poll(question: str, options: list[str], is_anonymous: bool):
         return response
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+
+def get_poll_results(message_id):
+    try:
+        response = telegram_api_request(
+            request="getPollResults",
+            params={"chat_id": telegram_ids["GROUP_ID"], "message_id": message_id},
+        )
+        return response
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def stop_poll(message_id):
+    try:
+        request = "stopPoll"
+        params = {"chat_id": telegram_ids["GROUP_ID"], "message_id": message_id}
+        response = telegram_api_request(method="POST", request=request, params=params)
+        return response
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
