@@ -172,6 +172,17 @@ async def update_group_members(payload: GroupMember):
                 (payload.chat_id, payload.user_name, payload.name),
             )
             conn.commit()  # Commit the new record to the database
+
+            # Update the user count
+            cursor.execute("SELECT count FROM user_count WHERE id = 1")
+            count_result = cursor.fetchone()
+            if count_result:
+                new_count = count_result[0] + 1
+                cursor.execute(
+                    "UPDATE user_count SET count = ? WHERE id = 1", (new_count,)
+                )
+                conn.commit()  # Commit the user count update to the database
+
             return {"message": "Group member added successfully"}
     except Exception as e:
         # Raise an HTTP 500 error with the exception details in case of an error
@@ -197,6 +208,17 @@ async def remove_group_members(payload: GroupMember):
                 (payload.chat_id, payload.user_name),
             )
             conn.commit()  # Commit the changes to the database
+
+            # Update the user count
+            cursor.execute("SELECT count FROM user_count WHERE id = 1")
+            count_result = cursor.fetchone()
+            if count_result:
+                new_count = count_result[0] - 1
+                cursor.execute(
+                    "UPDATE user_count SET count = ? WHERE id = 1", (new_count,)
+                )
+                conn.commit()  # Commit the user count update to the database
+
             return {"message": "Group member removed successfully"}
         else:
             # Return a message if no such member was found

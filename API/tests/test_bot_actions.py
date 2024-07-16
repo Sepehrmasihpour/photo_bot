@@ -5,6 +5,7 @@ from bot_actions import (
     store_photo_path,
     delete_photo_path,
     set_chat_photo,
+    post_poll,
 )
 
 
@@ -25,6 +26,11 @@ def mock_telegram_api_request(
             return {"ok": False, "error": "Invalid file_id"}
     elif request == "setChatPhoto":
         return {"ok": True}
+    elif request == "sendPoll":
+        if params["question"] and params["options"]:
+            return {"ok": True, "result": {"poll_id": "12345"}}
+        else:
+            return {"ok": False, "error": "Invalid poll data"}
 
 
 @pytest.fixture
@@ -136,3 +142,39 @@ def test_set_chat_photo_invalid(mock_telegram_api):
     # Verify the response
     assert response["ok"] is False
     assert response["error"] == "Failed to retrieve file info or store photo path"
+
+
+def test_post_poll_success(mock_telegram_api):
+    question = "What's your favorite programming language?"
+    options = ["Python", "JavaScript", "C++", "Java"]
+    is_anonymous = True
+
+    response = post_poll(question, options, is_anonymous)
+
+    assert response["ok"] is True
+    assert "poll_id" in response["result"]
+
+
+def test_post_poll_invalid_data(mock_telegram_api):
+    question = ""
+    options = []
+    is_anonymous = True
+
+    response = post_poll(question, options, is_anonymous)
+
+    assert response["ok"] is False
+    assert response["error"] == "Invalid poll data"
+
+
+def test_post_poll_network_error(mock_telegram_api):
+    with patch(
+        "bot_actions.telegram_api_request", side_effect=Exception("Network error")
+    ):
+        question = "What's your favorite programming language?"
+        options = ["Python", "JavaScript", "C++", "Java"]
+        is_anonymous = True
+
+        response = post_poll(question, options, is_anonymous)
+
+        assert response["ok"] is False
+        assert response["error"] == "Network error"

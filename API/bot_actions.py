@@ -230,3 +230,19 @@ def set_chat_photo(chat_id: str, file_id: str):
     except Exception as e:
         print(f"An error occurred while setting the chat photo: {e}")
         return {"ok": False, "error": str(e)}
+
+
+def post_poll(question: str, options: list[str], is_anonymous: bool):
+    request = "sendPoll"
+    method = "POST"
+    params = {
+        "chat_id": telegram_ids["GROUP_ID"],
+        "question": question,
+        "options": options,
+        "is_anonymous": is_anonymous,
+    }
+    try:
+        response = telegram_api_request(request=request, method=method, params=params)
+        return response
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
