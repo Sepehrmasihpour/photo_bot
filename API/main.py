@@ -2,6 +2,7 @@ import sqlite3
 from fastapi import FastAPI, HTTPException, UploadFile
 from bot_actions import *  # Importing necessary functions for bot actions.
 from data import telegram_ids, uniqe_chat_ids, GroupMember
+from datetime import datetime, timedelta
 
 # Import the create_database function from create_db
 from create_db import create_database
@@ -241,3 +242,52 @@ async def change_group_photo(file_id: str):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/voteGroupPhoto")
+async def vote_group_photo(
+    chat_id: int | str, argument: str, photo_file_id: str, anonymous: bool
+):
+    conn = get_db_connection()
+    cursor = conn.cursor()  # Create a cursor object to execute SQL commands
+    cursor.execute(
+        "SELECT name, user_name, last_proposal_date FROM group_members WHERE chat_id = ?",
+        (chat_id),
+    )  # Check if a record with the given 'chat_id' exists
+    result = cursor.fetchone()  # Fetch the result of the query
+    if result:
+        name, user_name, last_proposal_date = result
+        current_time = datetime.now()
+        if last_proposal_date == None or (
+            current_time - datetime.strptime(last_proposal_date, "%Y-%m-%d %H:%M:%S")
+        ) > timedelta(hours=24):
+            #! make sure to add a functionality here so that the endopoint will check the db to see if there is an active poll for changing the group photo or not and 
+            #! if there is make sure to  not allow the endpoint to continue and raise a httpx error i have made a db table for this but I think it's flawed fix it.
+            post_photo_response = send_media_via_bot(
+                media=photo_file_id,
+                media_type="photo",
+                chat_id=telegram_ids["GROUP_ID"],
+                caption="This is the photo that is being proposed to be replace the current group photo",
+            )
+            if post_photo_response.get("ok"):
+                pass
+                #! after this post the poll for changing the group photo and run it for 24h or until 3/4 of the group vote unless the group member count is 5 or less 
+                #! in that case run it for 24h or until all member vote after uset the postPoll and poll result and stop poll to do this and while loop and sleep functions 
+                #! and depending on the final function either do nothind other than sending a message to the group that the proposal has not been approvedn or change the photo 
+                #! using the setChatPhoto function 
+                #! P.S depending on the anonymous param make sure to either mention the member who proposed this or not
+            else:
+                raise HTTPException(
+                    status_code=500, detail=f"failed to post the photo on the group \ndetails: {post_photo_response.get("error")}"
+                )
+
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail="Every member can only suggest a proposal for the group once every 24 hours",
+            )
+    else:
+        raise HTTPException(
+            status_code=500,
+            detail="The chat_id provided is not in the group  data_base",
+        )

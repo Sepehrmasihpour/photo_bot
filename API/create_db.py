@@ -20,7 +20,9 @@ def create_database():
             CREATE TABLE group_members (
                 chat_id INTEGER PRIMARY KEY,
                 user_name TEXT NOT NULL,
-                name TEXT NOT NULL
+                name TEXT NOT NULL,
+                last_proposal_date TIMESTAMP DEFAULT NULL
+                
             )
             """
         )
@@ -58,6 +60,23 @@ def create_database():
         )
         # Initialize the user_count table with an entry
         cursor.execute("INSERT INTO user_count (id, count) VALUES (1, 0)")
+        conn.commit()  # Commit the changes to the database
+
+    # Check and create 'votes_in_progress' table if it does not exist
+    cursor.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='votes_in_progress'"
+    )
+    votes_in_progress_table_exists = cursor.fetchone()  # Fetch the result of the query
+    if not votes_in_progress_table_exists:
+        cursor.execute(
+            """
+            CREATE TABLE votes_in_progress (
+                id INTEGER PRIMARY KEY,
+                vote_type TEXT,
+                is_active INTEGER NOT NULL CHECK (is_active IN (0, 1))
+            )
+            """
+        )
         conn.commit()  # Commit the changes to the database
 
     conn.close()  # Close the database connection
