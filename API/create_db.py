@@ -79,6 +79,15 @@ def create_database():
         )
         conn.commit()  # Commit the changes to the database
 
+        # Insert initial records into the table with is_active set to 0 (inactive)
+        cursor.executemany(
+            """
+            INSERT INTO votes_in_progress (vote_type, is_active) VALUES (?, ?)
+            """,
+            [("group_photo", 0), ("add_member", 0), ("remove_member", 0)],
+        )
+        conn.commit()  # Commit the changes to insert the records
+
     conn.close()  # Close the database connection
 
 

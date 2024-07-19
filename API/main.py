@@ -3,6 +3,7 @@ from fastapi import FastAPI, HTTPException, UploadFile
 from bot_actions import *  # Importing necessary functions for bot actions.
 from data import telegram_ids, uniqe_chat_ids, GroupMember
 from datetime import datetime, timedelta
+import time
 
 # Import the create_database function from create_db
 from create_db import create_database
@@ -96,6 +97,7 @@ def uniqe_id_identifier(chat_id: str | int):
         uniqe_chat_id = uniqe_chat_ids
         input_chat_id = uniqe_chat_id[chat_id] if chat_id in uniqe_chat_id else chat_id
     return input_chat_id
+
 
 
 @app.post("/sendMessage/{chat_id}/{media_type}")
@@ -258,28 +260,31 @@ async def vote_group_photo(
     if result:
         name, user_name, last_proposal_date = result
         current_time = datetime.now()
-        if last_proposal_date == None or (
-            current_time - datetime.strptime(last_proposal_date, "%Y-%m-%d %H:%M:%S")
-        ) > timedelta(hours=24):
-            #! make sure to add a functionality here so that the endopoint will check the db to see if there is an active poll for changing the group photo or not and 
-            #! if there is make sure to  not allow the endpoint to continue and raise a httpx error i have made a db table for this but I think it's flawed fix it.
-            post_photo_response = send_media_via_bot(
+        if last_proposal_date == None or (current_time - datetime.strptime(last_proposal_date, "%Y-%m-%d %H:%M:%S")) > timedelta(hours=24):
+            cursor.execute("SELECT is_active from votes_in_progress WHERE vote_type = 'group_photo'")
+            vote_in_progress = True if cursor.fetchone()[0] == 0 else False
+            if vote_in_progress:
+                raise HTTPException(
+                    status_code=500, detail=f"There can be only one active proposal for the same issue at the same time"
+                )
+            else:
+                post_photo_response = send_media_via_bot(
                 media=photo_file_id,
                 media_type="photo",
                 chat_id=telegram_ids["GROUP_ID"],
                 caption="This is the photo that is being proposed to be replace the current group photo",
             )
-            if post_photo_response.get("ok"):
-                pass
-                #! after this post the poll for changing the group photo and run it for 24h or until 3/4 of the group vote unless the group member count is 5 or less 
-                #! in that case run it for 24h or until all member vote after uset the postPoll and poll result and stop poll to do this and while loop and sleep functions 
-                #! and depending on the final function either do nothind other than sending a message to the group that the proposal has not been approvedn or change the photo 
-                #! using the setChatPhoto function 
-                #! P.S depending on the anonymous param make sure to either mention the member who proposed this or not
-            else:
-                raise HTTPException(
-                    status_code=500, detail=f"failed to post the photo on the group \ndetails: {post_photo_response.get("error")}"
-                )
+                if post_photo_response.get("ok"):
+                    pass
+                    #! after this post the poll for changing the group photo and run it for 24h or until 3/4 of the group vote unless the group member count is 5 or less 
+                    #! in that case run it for 24h or until all member vote after uset the postPoll and poll result and stop poll to do this and while loop and sleep functions 
+                    #! and depending on the final function either do nothind other than sending a message to the group that the proposal has not been approvedn or change the photo 
+                    #! using the setChatPhoto function 
+                    #! P.S depending on the anonymous param make sure to either mention the member who proposed this or not0
+                else:
+                    raise HTTPException(
+                        status_code=500, detail=f"failed to post the photo on the group \ndetails: {post_photo_response.get("error")}"
+                    )
 
         else:
             raise HTTPException(
