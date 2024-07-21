@@ -22,39 +22,6 @@ telegram_ids = {
     "TEST_CHANNEL_ID": os.getenv("TEST_CHANNEL_ID"),
 }
 
-uniqe_chat_ids = {
-    "mainGroup": telegram_ids["GROUP_ID"],
-    "mainChannel": telegram_ids["CHANNEL_ID"],
-}
-
-# * This the test data for testing send_media endpoint
-media_test_cases = [
-    {
-        "chat_id": telegram_ids["BOT_CHAT_ID"],
-        "media_type": "photo",
-        "media": "https://fastly.picsum.photos/id/326/200/200.jpg?hmac=T_9V3kc7xrK46bj8WndwDhPuvpbjnAM3wfL_I7Gu6yA",  # url
-        "caption": "Test photo caption",
-    },
-    {
-        "chat_id": telegram_ids["BOT_CHAT_ID"],
-        "media_type": "photo",
-        "media": "AgACAgQAAx0EfU-ioAADsWYB_ebHeQOR1Wg22hYQYMAxwKhSAAJ7wTEbJysQULO2VE-EtnaVAQADAgADcwADNAQ",  # file_id
-        "caption": "Test photo caption",
-    },
-    {
-        "chat_id": telegram_ids["BOT_CHAT_ID"],
-        "media_type": "audio",
-        "media": "CQACAgQAAx0EfU-ioAADsmYCBRCwx7kBIWmwrASYWOy06FDhAAKmEwACJysQUEYwlN5ZdJodNAQ",  # file_id
-        "caption": "Test audio caption",
-    },
-    {
-        "chat_id": telegram_ids["BOT_CHAT_ID"],
-        "media_type": "text",
-        "media": "testing the sendMessage method",  # file_id
-        "caption": None,
-    },
-]
-
 
 class GroupMember(
     BaseModel

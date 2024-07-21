@@ -2,17 +2,12 @@ from typing import IO
 from data import telegram_ids
 import httpx
 from typing import Optional, Dict, Any
-import sqlite3
 import requests
 
 
 # Extracting the BOT_TOKEN from the data module.
 BOT_TOKEN = telegram_ids["BOT_TOKEN"]
 TEST_USER_BOT_TOKEN = telegram_ids["TEST_USER_BOT_TOKEN"]
-
-
-# ! make a function for sneding telegram requests geres otherwise it will be repeated over and over again
-#! make it so that it will have a request argument with the type string and basicly use the logic in the send_media_via_bot function to make it
 
 
 def telegram_api_request(
@@ -126,7 +121,7 @@ def telegram_getUpdates(allowed_updates: list = [], offset: int = 0):
         return {"ok": False, "error": str(e)}
 
 
-def store_photo_path(file_id: str):
+def get_photo_path(file_id: str):
     try:
         # Step 1: Get the file info using the Telegram API.
         file_info = telegram_api_request(
@@ -135,22 +130,8 @@ def store_photo_path(file_id: str):
 
         if file_info.get("ok"):
             photo_path = file_info["result"]["file_path"]
-
             # Step 2: Construct the download URL
             download_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{photo_path}"
-
-            # Step 3: Store file info in the database
-            db_path = "seshat_manager.db"  # Path to the SQLite database file
-            conn = sqlite3.connect(db_path)  # Connect to the SQLite database
-            cursor = conn.cursor()  # Create a cursor object to execute SQL commands
-
-            cursor.execute(
-                "INSERT OR REPLACE INTO photos (file_id, file_path) VALUES (?, ?)",
-                (file_id, download_url),
-            )
-            conn.commit()  # Commit the changes to the database
-            conn.close()  # Close the database connection
-
             return download_url  # Return the download URL
         else:
             error_message = file_info.get("error", "Unknown error")
@@ -158,41 +139,14 @@ def store_photo_path(file_id: str):
             return None  # Return None if the file info retrieval failed
 
     except Exception as e:
-        print(f"An error occurred while storing the photo path: {e}")
+        print(f"An error occurred while getting the photo path: {e}")
         return None  # Return None if any exception occurs
-
-
-def delete_photo_path(file_id: str):
-    try:
-        # Step 1: Define the path to the SQLite database
-        db_path = "seshat_manager.db"  # Path to the SQLite database file
-
-        # Step 2: Connect to the SQLite database
-        conn = sqlite3.connect(db_path)  # Connect to the SQLite database
-
-        # Step 3: Create a cursor object to execute SQL commands
-        cursor = conn.cursor()  # Create a cursor object to execute SQL commands
-
-        # Step 4: Execute the DELETE statement to remove the file information
-        cursor.execute("DELETE FROM photos WHERE file_id = ?", (file_id,))
-
-        # Step 5: Commit the changes to the database
-        conn.commit()  # Commit the changes to the database
-
-        # Step 6: Close the database connection
-        conn.close()  # Close the database connection
-
-        return {"ok": True, "message": "Photo path deleted successfully"}
-
-    except Exception as e:
-        print(f"An error occurred while deleting the photo path: {e}")
-        return {"ok": False, "error": str(e)}
 
 
 def set_chat_photo(chat_id: str, file_id: str):
     try:
         # Step 1: Store photo path in the database and get the download URL
-        file_path = store_photo_path(file_id)
+        file_path = get_photo_path(file_id)
         if not file_path:
             return {
                 "ok": False,
@@ -218,7 +172,6 @@ def set_chat_photo(chat_id: str, file_id: str):
         )
 
         if api_response.get("ok"):
-            delete_photo_path(file_id=file_id)
             return api_response  # Return the successful response
         else:
             error_message = api_response.get("description", "Unknown error")
