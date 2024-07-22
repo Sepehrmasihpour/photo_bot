@@ -1,6 +1,5 @@
 import pytest
 import sqlite3
-from create_db import create_database
 from db_modules import (
     get_db_connection,
     get_member_info,
@@ -8,6 +7,7 @@ from db_modules import (
     insert_member_info,
     delete_member_info,
     member_count_controll,
+    is_vote_active,
 )
 
 
@@ -38,6 +38,14 @@ def db_connection():
         """
         )
         conn.execute("INSERT INTO user_count (id, count) VALUES (1, 0)")
+        conn.execute(
+            """
+            CREATE TABLE votes_in_progress (
+                vote_type TEXT PRIMARY KEY,
+                is_active INTEGER
+            )
+        """
+        )
     yield conn
     conn.close()
 
@@ -138,3 +146,47 @@ def test_member_count_controll(db_connection, monkeypatch):
         cursor = db_connection.execute("SELECT count FROM user_count WHERE id = 1")
         row = cursor.fetchone()
         assert row["count"] == 0
+
+
+# tests for is_vote_active function
+def test_is_vote_active_valid_type_active(db_connection, monkeypatch):
+    monkeypatch.setattr("db_modules.get_db_connection", lambda: db_connection)
+
+    # Insert a test vote
+    with db_connection:
+        db_connection.execute(
+            "INSERT INTO votes_in_progress (vote_type, is_active) VALUES ('group_photo', 1)"
+        )
+
+    is_active = is_vote_active("group_photo")
+    assert is_active == True
+
+
+def test_is_vote_active_valid_type_inactive(db_connection, monkeypatch):
+    monkeypatch.setattr("db_modules.get_db_connection", lambda: db_connection)
+
+    # Insert a test vote
+    with db_connection:
+        db_connection.execute(
+            "INSERT INTO votes_in_progress (vote_type, is_active) VALUES ('group_photo', 0)"
+        )
+
+    is_active = is_vote_active("group_photo")
+    assert is_active == False
+
+
+def test_is_vote_active_invalid_type(db_connection, monkeypatch):
+    monkeypatch.setattr("db_modules.get_db_connection", lambda: db_connection)
+
+    is_active = is_vote_active("invalid_type")
+    assert is_active == None
+
+
+def test_is_vote_active_database_error(monkeypatch):
+    def mock_get_db_connection():
+        raise sqlite3.Error("Database connection error")
+
+    monkeypatch.setattr("db_modules.get_db_connection", mock_get_db_connection)
+
+    is_active = is_vote_active("group_photo")
+    assert is_active == None

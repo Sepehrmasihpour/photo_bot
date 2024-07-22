@@ -139,3 +139,24 @@ def member_count_controll(add: bool = True) -> bool:
     except sqlite3.Error as e:
         print(f"Database error: {e}")  # Print the error message if an exception occurs
         return False  # Return False in case of error
+
+
+def is_vote_active(vote_type: str):
+    vote_types = ["group_photo", "add_member", "remove_member"]
+    input_vote_type = vote_type.lower()
+    if input_vote_type not in vote_types:
+        print("There is no such vote_type")
+        return None
+    is_active = False
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT is_active FROM votes_in_progress WHERE vote_type = ?",
+                (input_vote_type,),  # Ensure the parameter is passed as a tuple
+            )
+            is_active = True if cursor.fetchone()[0] == 1 else False
+        return is_active
+    except sqlite3.Error as e:
+        print(f"Database Error: {e}")
+        return None
