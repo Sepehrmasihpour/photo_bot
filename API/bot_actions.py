@@ -185,18 +185,19 @@ def set_chat_photo(chat_id: str, file_id: str):
         return {"ok": False, "error": str(e)}
 
 
-def post_poll(question: str, options: list[str], is_anonymous: bool):
+def post_poll(question: str, options: list[str]):
     request = "sendPoll"
     method = "POST"
     params = {
         "chat_id": telegram_ids["GROUP_ID"],
         "question": question,
         "options": options,
-        "is_anonymous": is_anonymous,
+        "is_anonymous": True,
     }
     try:
         response = telegram_api_request(request=request, method=method, params=params)
         return response
+
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -217,6 +218,18 @@ def stop_poll(message_id):
         request = "stopPoll"
         params = {"chat_id": telegram_ids["GROUP_ID"], "message_id": message_id}
         response = telegram_api_request(method="POST", request=request, params=params)
+        return response
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def kick_member(chat_id: int, user_id: int):
+    try:
+
+        request = "kickChatMember"
+        params = {"chat_id": chat_id, "user_id": user_id}
+        method = "POST"
+        response = telegram_api_request(request=request, method=method, params=params)
         return response
     except Exception as e:
         return {"ok": False, "error": str(e)}

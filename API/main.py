@@ -1,5 +1,5 @@
 import time
-from db_modules import *
+from db_control import *
 from bot_actions import *  # Importing necessary functions for bot actions.
 from fastapi import FastAPI, HTTPException, UploadFile
 from data import telegram_ids, GroupMember
@@ -70,17 +70,21 @@ async def update_group_members(payload: GroupMember):
         # Raise an HTTP 500 error with the exception details in case of an error
         raise HTTPException(status_code=500, detail=str(e))
 
-
+#!write tests for the updated version
 @app.delete("/removeGroupMembers")
 async def remove_group_members(payload: GroupMember):
     try:
         member_info = get_member_info(chat_id=payload.chat_id)
         if member_info:
-            # Delete the record if it exists
-            delete_member_info(chat_id=payload.chat_id)
-            # Update the user count
-            member_count_controll(add=False)
-            return {"message": "Group member removed successfully"}
+            kick_member_reponse = kick_member(chat_id=GROUP_ID, user_id=payload.chat_id)
+            if kick_member_reponse["ok"]:    
+                # Delete the record if it exists
+                delete_member_info(chat_id=payload.chat_id)
+                # Update the user count
+                member_count_controll(add=False)
+                return {"message": "Group member removed successfully"}
+            else:
+                return {"ok":False, "message":f"could not kick the nmember from the group detail:{kick_member_reponse["error"]}"}
         else:
             # Return a message if no such member was found
             return {"message": "No such member found"}
@@ -111,7 +115,7 @@ def is_more_than_24_hours(date: str):
 def eligble_to_suggest(chat_id:int, vote_type:str):
     response = {
         "ok":bool,
-        "detail":str
+        "detail":str,
     }
     try:
 
@@ -157,10 +161,24 @@ async def vote_group_photo(
         raise HTTPException(
             status_code=400, detail=f"failed to post the photo on the group \ndetails: {post_photo_response.get("error")}"
         )
-    pass
-        #! after this post the poll for changing the group photo and run it for 24h or until 3/4 of the group vote unless the group member count is 5 or less 
-        #! in that case run it for 24h or until all member vote after uset the postPoll and poll member_info and stop poll to do this and while loop and sleep functions 
-        #! and depending on the final function either do nothind other than sending a message to the group that the proposal has not been approvedn or change the photo 
-        #! using the setChatPhoto function 
-        #! P.S depending on the anonymous param make sure to either mention the member who proposed this or not0
-        
+    needed_info = get_member_info(chat_id=chat_id) if not anonymous else None
+    if anonymous:
+        poll_question = f"The member who has suggested this change wants to remain anonymous{argument}"
+    else:
+        poll_question = f"{needed_info["user_name"]} member has suggested this change\n{argument}"
+    post_poll_result = post_poll(options=["YES", "NO"], question=poll_question)
+    if not post_poll_result['ok']:
+        raise HTTPException(status_code=400, detail= f"we could not post the poll to the group \ndetail: {post_poll_result["error"]}")
+    
+    poll_start_time = datetime.now()
+    end_poll_time = poll_start_time + timedelta(hours=24)
+
+    while datetime.now() < end_poll_time:
+        if is_vote_active(vote_type="group_photo"):
+            return {"ok":True,"message":"The voting has The voting ended succsesfully"}
+        print("the vote is still active checking again in 30 second")
+        time.sleep(30)
+    
+    return {"ok": True, "message":"after 24 hours not enough members have voted the suggestion will not go to actions"}
+
+

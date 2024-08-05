@@ -1,4 +1,4 @@
-from db_modules import get_member_info, delete_member_info, insert_member_info
+from db_control import get_member_info, delete_member_info, insert_member_info
 
 member_data = {"name": "test_name", "user_name": "test_user_name", "chat_id": 1}
 chat_id = member_data["chat_id"]

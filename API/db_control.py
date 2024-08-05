@@ -1,6 +1,96 @@
-from create_db import create_database
 import sqlite3
 from typing import Optional, Dict
+from datetime import datetime
+
+
+def create_database():
+    """
+    Creates the SQLite database and initializes the 'group_members', 'photos', and 'user_count' tables if they do not already exist.
+    """
+    db_path = "seshat_manager.db"  # Path to the SQLite database file
+    conn = sqlite3.connect(db_path)  # Connect to the SQLite database
+    cursor = conn.cursor()  # Create a cursor object to execute SQL commands
+
+    # Check and create 'group_members' table if it does not exist
+    cursor.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='group_members'"
+    )
+    group_members_table_exists = cursor.fetchone()  # Fetch the result of the query
+    if not group_members_table_exists:
+        cursor.execute(
+            """
+            CREATE TABLE group_members (
+                chat_id INTEGER PRIMARY KEY,
+                user_name TEXT NOT NULL,
+                name TEXT NOT NULL,
+                last_proposal_date TIMESTAMP DEFAULT NULL
+                
+            )
+            """
+        )
+        conn.commit()  # Commit the changes to the database
+
+    # Check and create 'photos' table if it does not exist
+    cursor.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='photos'"
+    )
+    photos_table_exists = cursor.fetchone()  # Fetch the result of the query
+    if not photos_table_exists:
+        cursor.execute(
+            """
+            CREATE TABLE photos (
+                file_id TEXT PRIMARY KEY,
+                file_path TEXT NOT NULL
+            )
+            """
+        )
+        conn.commit()  # Commit the changes to the database
+
+    # Check and create 'user_count' table if it does not exist
+    cursor.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='user_count'"
+    )
+    user_count_table_exists = cursor.fetchone()  # Fetch the result of the query
+    if not user_count_table_exists:
+        cursor.execute(
+            """
+            CREATE TABLE user_count (
+                id INTEGER PRIMARY KEY,
+                count INTEGER NOT NULL
+            )
+            """
+        )
+        # Initialize the user_count table with an entry
+        cursor.execute("INSERT INTO user_count (id, count) VALUES (1, 0)")
+        conn.commit()  # Commit the changes to the database
+
+    # Check and create 'votes_in_progress' table if it does not exist
+    cursor.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='votes_in_progress'"
+    )
+    votes_in_progress_table_exists = cursor.fetchone()  # Fetch the result of the query
+    if not votes_in_progress_table_exists:
+        cursor.execute(
+            """
+            CREATE TABLE votes_in_progress (
+                id INTEGER PRIMARY KEY,
+                vote_type TEXT,
+                is_active INTEGER NOT NULL CHECK (is_active IN (0, 1))
+            )
+            """
+        )
+        conn.commit()  # Commit the changes to the database
+
+        # Insert initial records into the table with is_active set to 0 (inactive)
+        cursor.executemany(
+            """
+            INSERT INTO votes_in_progress (vote_type, is_active) VALUES (?, ?)
+            """,
+            [("group_photo", 0), ("add_member", 0), ("remove_member", 0)],
+        )
+        conn.commit()  # Commit the changes to insert the records
+
+    conn.close()  # Close the database connection
 
 
 def get_db_connection() -> sqlite3.Connection:
@@ -160,3 +250,31 @@ def is_vote_active(vote_type: str):
     except sqlite3.Error as e:
         print(f"Database Error: {e}")
         return None
+
+
+def reset_member_last_proposal(chat_id: int) -> bool:
+    """
+    Resets the last_proposal_date of the member with the given chat_id to the current time.
+    Returns True if the update is successful, otherwise False.
+    """
+    try:
+        with get_db_connection() as conn:  # Open a database connection using a context manager
+            cursor = conn.cursor()  # Create a cursor object
+            current_time = datetime.now()  # Get the current time
+            cursor.execute(
+                """
+                UPDATE group_members
+                SET last_proposal_date = ?
+                WHERE chat_id = ?
+                """,
+                (
+                    current_time,
+                    chat_id,
+                ),  # Execute SQL query to update last_proposal_date
+            )
+            conn.commit()  # Commit the transaction
+        return True  # Return True if the update is successful
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")  # Print the error message if an exception occurs
+        return False  # Return False in case of error

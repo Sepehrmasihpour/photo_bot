@@ -6,9 +6,8 @@ from bot_actions import *
 def test_post_poll_success(mock_telegram_api):
     question = "What's your favorite programming language?"
     options = ["Python", "JavaScript", "C++", "Java"]
-    is_anonymous = True
 
-    response = post_poll(question, options, is_anonymous)
+    response = post_poll(question, options)
 
     assert response["ok"] is True
     assert "poll_id" in response["result"]
@@ -17,9 +16,8 @@ def test_post_poll_success(mock_telegram_api):
 def test_post_poll_invalid_data(mock_telegram_api):
     question = ""
     options = []
-    is_anonymous = True
 
-    response = post_poll(question, options, is_anonymous)
+    response = post_poll(question, options)
 
     assert response["ok"] is False
     assert response["error"] == "Invalid poll data"
@@ -31,9 +29,8 @@ def test_post_poll_network_error(mock_telegram_api):
     ):
         question = "What's your favorite programming language?"
         options = ["Python", "JavaScript", "C++", "Java"]
-        is_anonymous = True
 
-        response = post_poll(question, options, is_anonymous)
+        response = post_poll(question, options)
 
         assert response["ok"] is False
         assert response["error"] == "Network error"

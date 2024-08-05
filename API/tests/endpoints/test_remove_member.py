@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from db_modules import (
+from db_control import (
     get_member_info,
     delete_member_info,
     insert_member_info,
